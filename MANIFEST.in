@@ -1,0 +1,3 @@
+graft src/openfoam_wrapper/sphinx_build/html
+recursive-include src/openfoam_wrapper/test *.py
+
