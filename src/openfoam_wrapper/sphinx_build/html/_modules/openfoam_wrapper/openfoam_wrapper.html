@@ -1,0 +1,531 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>openfoam_wrapper.openfoam_wrapper &mdash; openfoam_wrapper 0.01 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.01',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="openfoam_wrapper 0.01 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">openfoam_wrapper 0.01 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for openfoam_wrapper.openfoam_wrapper</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">OpenMDAO Wrapper for OpenFOAM with PyFoam.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">openmdao.main.api</span> <span class="kn">import</span> <span class="n">Component</span><span class="p">,</span> <span class="n">VariableTree</span>
+<span class="kn">from</span> <span class="nn">openmdao.main.datatypes.api</span> <span class="kn">import</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">VarTree</span><span class="p">,</span> <span class="n">Bool</span>
+<span class="kn">from</span> <span class="nn">openmdao.main.datatypes.list</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">openmdao.lib.components.external_code</span> <span class="kn">import</span> <span class="n">ExternalCode</span>
+
+<span class="kn">from</span> <span class="nn">PyFoam.RunDictionary.SolutionDirectory</span> <span class="kn">import</span> <span class="n">SolutionDirectory</span>
+<span class="kn">from</span> <span class="nn">PyFoam.RunDictionary.ParsedParameterFile</span> <span class="kn">import</span> <span class="n">ParsedParameterFile</span>
+<span class="kn">from</span> <span class="nn">PyFoam.LogAnalysis.SimpleLineAnalyzer</span> <span class="kn">import</span> <span class="n">GeneralSimpleLineAnalyzer</span>
+<span class="kn">from</span> <span class="nn">PyFoam.LogAnalysis.FoamLogAnalyzer</span> <span class="kn">import</span> <span class="n">FoamLogAnalyzer</span>
+<span class="kn">from</span> <span class="nn">PyFoam.LogAnalysis.LogAnalyzerApplication</span> <span class="kn">import</span> <span class="n">LogAnalyzerApplication</span>
+<span class="kn">from</span> <span class="nn">PyFoam.Execution.BasicRunner</span> <span class="kn">import</span> <span class="n">BasicRunner</span>
+<span class="kn">from</span> <span class="nn">PyFoam.RunDictionary.TimelineDirectory</span> <span class="kn">import</span> <span class="n">TimelineDirectory</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">ast</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">shlex</span>
+<span class="kn">import</span> <span class="nn">string</span>
+
+
+<div class="viewcode-block" id="FoamBaseComponent"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamBaseComponent">[docs]</a><span class="k">class</span> <span class="nc">FoamBaseComponent</span><span class="p">(</span><span class="n">Component</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This class is base Component to execute OpenFOAM pre,main and post commands&quot;&quot;&quot;</span>
+    <span class="n">case_dir</span> <span class="o">=</span> <span class="n">Str</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;in&quot;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;OpenFOAM Case Dir. Absolute path or relative path in $FOAM_RUN.&#39;</span><span class="p">)</span>
+    <span class="n">force_fd</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="n">framework_var</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">deriv_ignore</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&quot;If True, always finite difference this component.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Component.__init__() and check the path to icoFoam.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FoamBaseComponent</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="c">#Check OpenFOAM commands in $PATH.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_which</span><span class="p">(</span><span class="s">&quot;icoFoam&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;OpenFOAM command is not found. Check $PATH.&quot;</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_which</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">cmd</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;which command whith python.&quot;&quot;&quot;</span> 
+        <span class="k">def</span> <span class="nf">is_exe</span><span class="p">(</span><span class="n">fpath</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span><span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">)</span>
+        <span class="n">fpath</span><span class="p">,</span> <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fpath</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">is_exe</span><span class="p">(</span><span class="n">cmd</span><span class="p">):</span> <span class="k">return</span> <span class="n">cmd</span>
+        <span class="k">else</span><span class="p">:</span>        
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&quot;PATH&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">):</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">)</span>
+                <span class="n">exe_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">cmd</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">is_exe</span><span class="p">(</span><span class="n">exe_file</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">exe_file</span>
+        <span class="k">return</span> <span class="bp">None</span>
+        
+<div class="viewcode-block" id="FoamBaseComponent.getPath"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamBaseComponent.getPath">[docs]</a>    <span class="k">def</span> <span class="nf">getPath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fdpath</span><span class="p">,</span><span class="n">riseError</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;check and get the absolute path or relative path in $FOAM_RUN.&quot;&quot;&quot;</span> 
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fdpath</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">fdpath</span>
+            
+        <span class="n">bool_foam_run</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">foam_run</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">foam_run</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;FOAM_RUN&#39;</span><span class="p">]</span>
+            <span class="n">fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">foam_run</span><span class="p">,</span> <span class="n">fdpath</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="n">bool_foam_run</span> <span class="o">=</span> <span class="bp">False</span>
+        
+        <span class="k">if</span> <span class="n">bool_foam_run</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fpath</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">fpath</span>
+            
+        <span class="k">if</span> <span class="n">riseError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot; &#39;</span><span class="si">%s</span><span class="s">&#39; was not found.&quot;</span> <span class="o">%</span> <span class="n">fdpath</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">None</span>
+                </div>
+    <span class="k">def</span> <span class="nf">_input_trait_modified</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;hook th changing a trait.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FoamBaseComponent</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_input_trait_modified</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;case_dir&#39;</span><span class="p">:</span>
+            <span class="n">caseDir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getPath</span><span class="p">(</span><span class="n">new</span><span class="p">,</span><span class="bp">False</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">caseDir</span><span class="o">==</span><span class="bp">None</span><span class="p">:</span>
+                <span class="c">#type(caseDir) is str or unicode</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span> <span class="o">=</span> <span class="n">SolutionDirectory</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">caseDir</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;case_dir &#39;</span><span class="si">%s</span><span class="s">&#39; was&quot;</span>
+                                         <span class="s">&quot; not found.&quot;</span> <span class="o">%</span> <span class="n">new</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="FoamClearCase"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamClearCase">[docs]</a><span class="k">class</span> <span class="nc">FoamClearCase</span><span class="p">(</span><span class="n">FoamBaseComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cleaning Case Directory with  PyFoam.RunDictionary.SolutionDirectory.SolutionDirectory.clear method.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">foamClearSetting</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({</span><span class="s">&quot;execute flag&quot;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span> <span class="s">&quot;after&quot;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span> <span class="s">&quot;processor&quot;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span> <span class="s">&quot;pyfoam&quot;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span> <span class="s">&quot;keepLast&quot;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&quot;vtk&quot;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+                    <span class="s">&quot;keepRegular&quot;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&quot;clearHistory&quot;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&quot;functionObjectData&quot;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span> <span class="s">&quot;additional&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;postProcessing&quot;</span><span class="p">,</span><span class="s">&quot;ArchiveDir&quot;</span><span class="p">]},</span>
+                   <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;in&quot;</span><span class="p">,</span>
+                   <span class="n">desc</span><span class="o">=</span><span class="s">&#39;Option for PyFoam.RunDictionary.SolutionDirectory.SolutionDirectory.clear method.&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FoamClearCase.execute"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamClearCase.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clearCase</span><span class="p">()</span>
+        </div>
+<div class="viewcode-block" id="FoamClearCase.clearCase"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamClearCase.clearCase">[docs]</a>    <span class="k">def</span> <span class="nf">clearCase</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">clear</span><span class="p">(</span><span class="n">after</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">foamClearSetting</span><span class="p">[</span><span class="s">&quot;after&quot;</span><span class="p">],</span> <span class="n">processor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">foamClearSetting</span><span class="p">[</span><span class="s">&quot;processor&quot;</span><span class="p">],</span>
+                             <span class="n">pyfoam</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">foamClearSetting</span><span class="p">[</span><span class="s">&quot;pyfoam&quot;</span><span class="p">],</span> <span class="n">keepLast</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">foamClearSetting</span><span class="p">[</span><span class="s">&quot;keepLast&quot;</span><span class="p">],</span> 
+                             <span class="n">vtk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">foamClearSetting</span><span class="p">[</span><span class="s">&quot;vtk&quot;</span><span class="p">],</span> <span class="n">keepRegular</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">foamClearSetting</span><span class="p">[</span><span class="s">&quot;keepRegular&quot;</span><span class="p">],</span> 
+                             <span class="n">clearHistory</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">foamClearSetting</span><span class="p">[</span><span class="s">&quot;clearHistory&quot;</span><span class="p">],</span>
+                             <span class="n">functionObjectData</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">foamClearSetting</span><span class="p">[</span><span class="s">&quot;functionObjectData&quot;</span><span class="p">],</span>
+                             <span class="n">additional</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">foamClearSetting</span><span class="p">[</span><span class="s">&quot;additional&quot;</span><span class="p">])</span>
+            
+</div></div>
+<div class="viewcode-block" id="FoamEditDicts"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamEditDicts">[docs]</a><span class="k">class</span> <span class="nc">FoamEditDicts</span><span class="p">(</span><span class="n">FoamBaseComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Edit and Write the OpenFOAM dictionary file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">foamEditKeywords</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({},</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;&quot;key&quot; is keyword in subDict. &quot;value&quot; is value in subDict. the variables in &quot;value&quot; is appended automatic as Float.  example) {</span><span class="se">\&#39;</span><span class="s">0/U.boundaryField.movingWall.value</span><span class="se">\&#39;</span><span class="s">:</span><span class="se">\&#39;</span><span class="s">&quot;uniform (</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">)&quot; %(x1,x2,x3)</span><span class="se">\&#39;</span><span class="s">}&#39;</span><span class="p">)</span>
+    <span class="n">_variables</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">_ParsedParameterFiles</span><span class="o">=</span><span class="p">{}</span>
+    
+    <span class="k">def</span> <span class="nf">_getValueNames</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">val</span><span class="p">[</span><span class="n">val</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s">&quot;%&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">maketrans</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">),</span><span class="s">&quot;()&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">_separateDict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; &#39;0/U.boundaryField.movingWall.value&#39; -&gt; (&quot;0/U&quot;,&quot;boundaryField.movingWall.value&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kl</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">kl</span><span class="p">)):</span>
+            <span class="n">fpath</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">kl</span><span class="p">[:</span><span class="o">-</span><span class="n">i</span><span class="p">],</span><span class="s">&quot;.&quot;</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="n">fpath</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">fpath</span><span class="p">,</span><span class="n">string</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">kl</span><span class="p">[</span><span class="o">-</span><span class="n">i</span><span class="p">:],</span><span class="s">&quot;.&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39; was  not found.&quot;</span> <span class="o">%</span> <span class="n">key</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_input_trait_modified</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FoamEditDicts</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_input_trait_modified</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;foamEditKeywords_items&#39;</span> <span class="ow">or</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;foamEditKeywords&#39;</span><span class="p">:</span>
+            <span class="n">oldvariables</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_variables</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="o">=</span><span class="p">[]</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamEditKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getValueNames</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                
+            <span class="c">#remove redundant data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">))</span> 
+            
+            <span class="c">#append variable list</span>
+            <span class="n">appendList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">oldvariables</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">appendList</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;in&quot;</span><span class="p">))</span>
+            
+            <span class="c">#remove variable list</span>
+            <span class="n">removeList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">oldvariables</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">removeList</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                
+            <span class="n">olddfiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ParsedParameterFiles</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="n">dfiles</span> <span class="o">=</span><span class="p">[]</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamEditKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="n">dfile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separateDict</span><span class="p">(</span><span class="n">key</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">dfiles</span> <span class="o">=</span> <span class="n">dfiles</span> <span class="o">+</span> <span class="p">[</span><span class="n">dfile</span><span class="p">]</span>
+                
+            <span class="c">#remove redundant data    </span>
+            <span class="n">dfiles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dfiles</span><span class="p">))</span>
+            
+            <span class="c">#append dfile list</span>
+            <span class="n">appendList</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dfiles</span><span class="p">)</span><span class="o">-</span><span class="nb">set</span><span class="p">(</span><span class="n">olddfiles</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">appendList</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_ParsedParameterFiles</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">=</span><span class="n">ParsedParameterFile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="n">key</span><span class="p">))</span> 
+            
+            <span class="c">#remove dfile list</span>
+            <span class="n">removeList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">olddfiles</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">dfiles</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">removeList</span><span class="p">:</span>
+                <span class="k">del</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ParsedParameterFiles</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                                
+<div class="viewcode-block" id="FoamEditDicts.execute"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamEditDicts.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">editDicts</span><span class="p">()</span>
+        </div>
+<div class="viewcode-block" id="FoamEditDicts.editDicts"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamEditDicts.editDicts">[docs]</a>    <span class="k">def</span> <span class="nf">editDicts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamEditKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="c">#append &quot;self.&quot; &#39;&quot;uniform (%s 0 0)&quot; %(x1)&#39;-&gt;&#39;&quot;uniform (%s 0 0)&quot; %(self.x1)&#39;</span>
+            <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s">&quot;%&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="p">[:</span><span class="n">val</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s">&quot;%&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> \
+                  <span class="n">val</span><span class="p">[</span><span class="n">val</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s">&quot;%&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot;(&quot;</span><span class="p">,</span><span class="s">&quot;(self.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">,</span><span class="s">&quot;,self.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">)</span>
+                
+            <span class="c">#edit ParsedParameterFile</span>
+            <span class="n">fdkey</span><span class="p">,</span><span class="n">sdkey</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separateDict</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">sdkeylist</span> <span class="o">=</span> <span class="n">sdkey</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;.&quot;</span><span class="p">)</span>
+
+            <span class="n">di</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ParsedParameterFiles</span><span class="p">[</span><span class="n">fdkey</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">sd</span> <span class="ow">in</span> <span class="n">sdkeylist</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">di</span> <span class="o">=</span> <span class="n">di</span><span class="p">[</span><span class="n">sd</span><span class="p">]</span>
+            <span class="n">di</span><span class="p">[</span><span class="n">sdkeylist</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        
+        <span class="c"># write     </span>
+        <span class="k">for</span> <span class="n">pf</span> <span class="ow">in</span>  <span class="bp">self</span><span class="o">.</span><span class="n">_ParsedParameterFiles</span><span class="o">.</span><span class="n">itervalues</span><span class="p">():</span>
+            <span class="n">pf</span><span class="o">.</span><span class="n">writeFile</span><span class="p">()</span>   
+    </div></div>
+<div class="viewcode-block" id="FoamRunAllrun"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamRunAllrun">[docs]</a><span class="k">class</span> <span class="nc">FoamRunAllrun</span><span class="p">(</span><span class="n">FoamBaseComponent</span><span class="p">,</span><span class="n">ExternalCode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;the Allrun is executed.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="FoamRunAllrun.execute"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamRunAllrun.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">runAllrun</span><span class="p">()</span>
+        </div>
+<div class="viewcode-block" id="FoamRunAllrun.runAllrun"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamRunAllrun.runAllrun">[docs]</a>    <span class="k">def</span> <span class="nf">runAllrun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="s">&#39;Allrun&#39;</span><span class="p">)]</span>
+        <span class="n">cDir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="c"># Execute the component</span>
+        <span class="n">ExternalCode</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">cDir</span><span class="p">)</span>
+
+    </div></div>
+<div class="viewcode-block" id="FoamRunCommands"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamRunCommands">[docs]</a><span class="k">class</span> <span class="nc">FoamRunCommands</span><span class="p">(</span><span class="n">FoamBaseComponent</span><span class="p">,</span><span class="n">ExternalCode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This class executes multi external codes like Allrun.&quot;&quot;&quot;</span>
+    <span class="n">commands</span> <span class="o">=</span> <span class="n">List</span><span class="p">([],</span><span class="n">iotype</span><span class="o">=</span><span class="s">&#39;in&#39;</span><span class="p">)</span>
+    <span class="n">return_codes</span> <span class="o">=</span> <span class="n">List</span><span class="p">([],</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&#39;out&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;Return code from the commands.&#39;</span><span class="p">)</span>
+    
+    <span class="n">command</span> <span class="o">=</span> <span class="n">List</span><span class="p">(</span><span class="n">Str</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;The command to be executed for ExternalCode.&#39;</span><span class="p">)</span>
+    <span class="n">return_code</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;Return code from the command for ExternalCode.&#39;</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="FoamRunCommands.execute"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamRunCommands.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">runCommands</span><span class="p">()</span>
+    </div>
+<div class="viewcode-block" id="FoamRunCommands.runCommands"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamRunCommands.runCommands">[docs]</a>    <span class="k">def</span> <span class="nf">runCommands</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">commands</span> <span class="o">==</span> <span class="p">[]:</span>
+            <span class="k">return</span>
+            
+        <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">commands</span><span class="p">:</span>
+            <span class="c">#get foam command of abs path.</span>
+            <span class="n">commandPath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_foam_command</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+            <span class="n">resource</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="n">commandPath</span><span class="p">:</span>
+                <span class="c">#when foam command</span>
+                <span class="n">bname</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">commandPath</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/log.</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">bname</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> -case </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">command</span><span class="p">[:</span><span class="mi">6</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&quot;mpirun&quot;</span><span class="p">:</span>
+                    <span class="n">resource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">resource</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> -case </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">bname</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c">#no foam command</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="o">=</span><span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+                <span class="n">resource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">resource</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="bp">None</span>
+                    
+            <span class="nb">super</span><span class="p">(</span><span class="n">FoamRunCommands</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">return_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">return_code</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource</span> <span class="o">=</span> <span class="n">resource</span>
+           </div>
+    <span class="k">def</span> <span class="nf">_check_foam_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">command</span><span class="p">):</span>
+    <span class="c">#foam_command is in $FOAM_APPBIN or $FOAM_USER_APPBIN or same dir of icoFoam.</span>
+        <span class="n">commandWithOutMPI</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+        <span class="n">cmdList</span> <span class="o">=</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cmdList</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&quot;mpirun&quot;</span><span class="p">:</span>
+            <span class="n">commandWithOutMPI</span> <span class="o">=</span> <span class="n">cmdList</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">cmd</span> <span class="ow">in</span> <span class="n">cmdList</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_which</span><span class="p">(</span><span class="n">cmd</span><span class="p">):</span>
+                    <span class="n">commandWithOutMPI</span> <span class="o">=</span> <span class="n">cmd</span>
+                    <span class="k">break</span>
+        
+        <span class="n">commandPath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_which</span><span class="p">(</span><span class="n">commandWithOutMPI</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">commandPath</span><span class="p">:</span>
+             <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;Not Found </span><span class="si">%s</span><span class="s"> in </span><span class="si">%s</span><span class="s">.&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">commandWithOutMPI</span><span class="p">,</span><span class="n">command</span><span class="p">),</span> <span class="ne">RuntimeError</span><span class="p">)</span>
+        
+        <span class="n">commandDir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">commandPath</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">commandDir</span> <span class="o">==</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&quot;FOAM_USER_APPBIN&quot;</span><span class="p">]:</span> <span class="k">return</span> <span class="n">commandPath</span>
+        <span class="k">if</span> <span class="n">commandDir</span> <span class="o">==</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&quot;FOAM_APPBIN&quot;</span><span class="p">]:</span> <span class="k">return</span> <span class="n">commandPath</span>
+        <span class="k">if</span> <span class="n">commandDir</span> <span class="o">==</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_which</span><span class="p">(</span><span class="s">&quot;icoFoam&quot;</span><span class="p">)):</span> <span class="k">return</span> <span class="n">commandPath</span>
+        <span class="k">return</span> <span class="bp">None</span>
+</div>
+<div class="viewcode-block" id="TimeLineValue"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.TimeLineValue">[docs]</a><span class="k">class</span> <span class="nc">TimeLineValue</span><span class="p">(</span><span class="n">VariableTree</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Container of variables&quot;&quot;&quot;</span>
+    <span class="n">allTimesValues</span> <span class="o">=</span> <span class="n">Array</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]]))</span>
+    <span class="n">averageValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">latestTimeValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">maxValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">minValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">sumValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="TimeLineValue.correct"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.TimeLineValue.correct">[docs]</a>    <span class="k">def</span> <span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        update averageValue,latestTimeValue,maxValue,minValue,sumValue from allTimesValues.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">averageValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allTimesValues</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">latestTimeValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allTimesValues</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allTimesValues</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allTimesValues</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sumValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allTimesValues</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    
+</div></div>
+<div class="viewcode-block" id="FoamGetTimeline"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamGetTimeline">[docs]</a><span class="k">class</span> <span class="nc">FoamGetTimeline</span><span class="p">(</span><span class="n">FoamBaseComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;OpenFOAM Timeline Getter Component with PyFoam.</span>
+<span class="sd">       TimelineData is post data with sample command. exampe)&quot;postprocessing/probes&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">foamGetTimelineKeywords</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({},</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;&quot;key&quot; is variables group. &quot;value&quot; is post data path and column number. the &quot;key&quot; is appended automatic as variables group.  example){&quot;f1&quot;:&quot;postProcessing/probes/0/p|1&#39;</span><span class="p">)</span>
+    <span class="n">_resultGroups</span><span class="o">=</span><span class="p">[]</span>
+    
+    <span class="k">def</span> <span class="nf">_input_trait_modified</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FoamGetTimeline</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_input_trait_modified</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;foamGetTimelineKeywords_items&#39;</span> <span class="ow">or</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;foamGetTimelineKeywords&#39;</span><span class="p">:</span>
+            <span class="n">oldresultGroups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="o">=</span><span class="p">[]</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamGetTimelineKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span> <span class="o">+</span> <span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                
+            <span class="c">#remove redundant data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="p">))</span> 
+            
+            <span class="c">#append resultGroups list</span>
+            <span class="n">appendList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">oldresultGroups</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">appendList</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">VarTree</span><span class="p">(</span><span class="n">TimeLineValue</span><span class="p">(),</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;out&quot;</span><span class="p">))</span>
+            
+            <span class="c">#remove resultGroups list</span>
+            <span class="n">removeList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">oldresultGroups</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">removeList</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FoamGetTimeline.execute"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamGetTimeline.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">getTimeline</span><span class="p">()</span>
+        </div>
+<div class="viewcode-block" id="FoamGetTimeline.getTimeline"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamGetTimeline.getTimeline">[docs]</a>    <span class="k">def</span> <span class="nf">getTimeline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamGetTimelineKeywords</span> <span class="o">==</span> <span class="p">{}:</span>
+            <span class="k">return</span>
+        
+        <span class="n">timeLines</span><span class="o">=</span><span class="p">{}</span> 
+        
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamGetTimelineKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">probefile</span><span class="p">,</span><span class="n">column</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;|&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+            
+            <span class="c">#from GUI get unicode but str</span>
+            <span class="n">probefile</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">probefile</span><span class="p">)</span> 
+            <span class="n">column</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+            
+            <span class="n">fieldName</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">probefile</span><span class="p">)</span>
+            <span class="n">probeDir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">probefile</span><span class="p">))</span>
+            <span class="n">wTime</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">probefile</span><span class="p">)))</span>
+            
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">timeLines</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">probefile</span><span class="p">):</span>
+                
+                <span class="n">tld</span><span class="o">=</span><span class="n">TimelineDirectory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="n">dirName</span><span class="o">=</span><span class="n">probeDir</span><span class="p">,</span><span class="n">writeTime</span><span class="o">=</span><span class="n">wTime</span><span class="p">)</span>
+                <span class="n">ssdata</span><span class="o">=</span><span class="n">tld</span><span class="p">[</span><span class="n">fieldName</span><span class="p">]</span><span class="o">.</span><span class="n">__call__</span><span class="p">()</span>
+                <span class="n">timeLines</span><span class="p">[</span><span class="n">probefile</span><span class="p">]</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ssdata</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+             
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">allTimesValues</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">timeLines</span><span class="p">[</span><span class="n">probefile</span><span class="p">][:,</span><span class="mi">0</span><span class="p">],</span><span class="n">timeLines</span><span class="p">[</span><span class="n">probefile</span><span class="p">][:,</span><span class="n">column</span><span class="p">]]</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+
+</div></div>
+<div class="viewcode-block" id="FoamAnalyzeLogs"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamAnalyzeLogs">[docs]</a><span class="k">class</span> <span class="nc">FoamAnalyzeLogs</span><span class="p">(</span><span class="n">FoamBaseComponent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;OpenFOAM Log Analyzer Component with PyFoam</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">foamAnalyzedKeywords</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({},</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;&quot;key&quot; is variables group. &quot;value&quot; is logfile name and string picked from log. the &quot;key&quot; is appended automatic as variables group.  example){&quot;f1&quot;:&quot;log.simpleFoam|DICPCG:  Solving for p, Initial residual = (.+?),&quot;}&#39;</span><span class="p">)</span>
+    <span class="n">_resultGroups</span><span class="o">=</span><span class="p">[]</span>
+    
+    <span class="k">def</span> <span class="nf">_input_trait_modified</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FoamAnalyzeLogs</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_input_trait_modified</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;foamAnalyzedKeywords_items&#39;</span> <span class="ow">or</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;foamAnalyzedKeywords&#39;</span><span class="p">:</span>
+            <span class="n">oldresultGroups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="o">=</span><span class="p">[]</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamAnalyzedKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span> <span class="o">+</span> <span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                
+            <span class="c">#remove redundant data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="p">))</span> 
+            
+            <span class="c">#append resultGroups list</span>
+            <span class="n">appendList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">oldresultGroups</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">appendList</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_trait</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">VarTree</span><span class="p">(</span><span class="n">TimeLineValue</span><span class="p">(),</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;out&quot;</span><span class="p">))</span>
+            
+            <span class="c">#remove resultGroups list</span>
+            <span class="n">removeList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">oldresultGroups</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">removeList</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">remove_trait</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FoamAnalyzeLogs.execute"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamAnalyzeLogs.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analyzeLogs</span><span class="p">()</span>
+    </div>
+<div class="viewcode-block" id="FoamAnalyzeLogs.analyzeLogs"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamAnalyzeLogs.analyzeLogs">[docs]</a>    <span class="k">def</span> <span class="nf">analyzeLogs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamAnalyzedKeywords</span> <span class="o">==</span> <span class="p">{}:</span>
+            <span class="k">return</span>
+            
+        <span class="n">lineAnalyzers</span><span class="o">=</span><span class="p">{}</span> <span class="c">#key is variable&#39;s name. value is GeneralSimpleLineAnalyzer</span>
+        <span class="n">FoamLogAnalyzers</span><span class="o">=</span><span class="p">{}</span> <span class="c">#key is logname. value is FoamLogAnalyzer</span>
+        
+        <span class="c"># create FoamLogAnalyzers and set lineAnalyzer each FoamLogAnalyzer loop</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamAnalyzedKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">logname</span><span class="p">,</span><span class="n">expt</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;|&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">lineAnalyzers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span>  <span class="n">GeneralSimpleLineAnalyzer</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">expt</span><span class="p">,</span> <span class="n">doFiles</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>  
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">FoamLogAnalyzers</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">logname</span><span class="p">):</span>
+                <span class="n">FoamLogAnalyzers</span><span class="p">[</span><span class="n">logname</span><span class="p">]</span> <span class="o">=</span> <span class="n">FoamLogAnalyzer</span><span class="p">(</span><span class="n">progress</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">FoamLogAnalyzers</span><span class="p">[</span><span class="n">logname</span><span class="p">]</span><span class="o">.</span><span class="n">addAnalyzer</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">lineAnalyzers</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
+        <span class="c"># LogAnalyzerApplication run            </span>
+        <span class="k">for</span> <span class="n">logname</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">FoamLogAnalyzers</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">log_app</span> <span class="o">=</span> <span class="n">LogAnalyzerApplication</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="n">log_app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="n">logname</span><span class="p">))</span>
+
+        <span class="c"># get result from  lineAnalyzer     </span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="n">lineAnalyzers</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">allTimesValues</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">getTimeline</span><span class="p">(</span><span class="n">key</span> <span class="o">+</span> <span class="s">&#39;_0&#39;</span><span class="p">)))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+
+</div></div>
+<div class="viewcode-block" id="OpenFOAM_wrapper"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.OpenFOAM_wrapper">[docs]</a><span class="k">class</span> <span class="nc">OpenFOAM_wrapper</span><span class="p">(</span><span class="n">FoamClearCase</span><span class="p">,</span> <span class="n">FoamEditDicts</span><span class="p">,</span> <span class="n">FoamRunAllrun</span><span class="p">,</span> <span class="n">FoamGetTimeline</span><span class="p">,</span> <span class="n">FoamAnalyzeLogs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The simple operation inherited five component classes.</span>
+<span class="sd">        * FoamClearCase</span>
+<span class="sd">        * FoamEditDicts</span>
+<span class="sd">        * FoamRunAllrun</span>
+<span class="sd">        * FoamGetTimeline</span>
+<span class="sd">        * FoamAnalyzeLogs</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_input_trait_modified</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;hook th changing a trait.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">OpenFOAM_wrapper</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_input_trait_modified</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+            
+<div class="viewcode-block" id="OpenFOAM_wrapper.execute"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.OpenFOAM_wrapper.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        It is executed in the order of the following.</span>
+<span class="sd">            1. clear Case</span>
+<span class="sd">            2. Edit Dict</span>
+<span class="sd">            3. execute Allrun</span>
+<span class="sd">            4. log Analysis    </span>
+<span class="sd">            5. log Analysis</span>
+<span class="sd">               </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">FoamClearCase</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>  
+        <span class="n">FoamEditDicts</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">FoamRunAllrun</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">FoamGetTimeline</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">FoamAnalyzeLogs</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        </div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">openfoam_wrapper 0.01 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright .
+      Last updated on May 27, 2014.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
