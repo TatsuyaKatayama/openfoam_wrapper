@@ -18,7 +18,7 @@ OpenFOAMのcavityチュートリアルを用いてパラメータの同定を行
 次のようなcavity問題において、point1の圧力/密度の値が予め分かっている場合、
 粘性係数(nu)をbroyden法を用いて同定する。
 
-.. figure:: ../img/cavity.png
+.. figure:: ./img/cavity.png
    :align: center
 
 
@@ -43,13 +43,14 @@ OpenFOAMの利用できる端末より下記コマンドを実行する。
    blockMesh
 
 自動化を行うためのAllrunファイルを作成する(OpenFOAM_wrapperで利用するため)
-今回は格子の変更は伴わないため、icoFoam>log.icoFoamの一文を記したファイルを用意し、
+今回は格子の変更は伴わないため、ソルバの実行を記したファイルを用意し、
 実行権限を与える。
 
 .. code-block:: bash
    :linenos: 
 
-   echo 'icoFoam>log.icoFoam' >Allrun
+   echo '#!/bin/sh' >Allrun
+   echo 'icoFoam>log.icoFoam' >>Allrun
    chmod +x Allrun
     
 最後に、point1の圧力値を取得するため
@@ -94,7 +95,7 @@ OpenMDAOユーザガイドの[Getting Started] - [GUI]に示されるように�
 さらにAssemblyのdriverに"BroydenSolver"、componentに"OpenFOAM_wrapper"をドラッグする。
 "OpenFOAM_wrapper"のドラッグ時に表示されるダイアログに、cavityと入力する。
 
-.. figure:: ../img/cavity_broyden_assy01.png
+.. figure:: ./img/cavity_broyden_assy01.png
     :align: center
     
 
@@ -113,7 +114,7 @@ case_dirを認識したOpenFOAM_wrapperが下記に示す処理を順に行う�
 
 
     1. 解析結果の消去
-    2. constant/transptProperties内のnuの編集
+    2. constant/transportProperties内のnuの編集
     3. Allrunの実行
     4. logファイルの分析とデータの取得
     5. function Objectsで取得したデータの取得
@@ -121,25 +122,25 @@ case_dirを認識したOpenFOAM_wrapperが下記に示す処理を順に行う�
 
 今回「1. 解析結果の消去」「3. Allrunの実行」についてはデフォルトの設定で良い上、
 「4. logファイルの分析とデータの取得」も処理自体が不要である。
-よって「2. :ref:`constant/transptProperties内のnuの編集`」と
+よって「2. :ref:`constant/transportProperties内のnuの編集`」と
 「5. :ref:`function Objectsで取得したデータの取得`」の説明を以下で行う。
 
 
-.. _`constant/transptProperties内のnuの編集`:
+.. _`constant/transportProperties内のnuの編集`:
 
-*constant/transptProperties内のnuの編集*
-++++++++++++++++++++++++++++++++++++++++
+*constant/transportProperties内のnuの編集*
+++++++++++++++++++++++++++++++++++++++++++
 再び、cavity componentを右クリックし表示されるポップアップメニューから、
 Editを選択し、ダイアログを表示させる。
 
 foamEditKeywords行のvalue列の[object Object]欄をダブルクリックする。
 表示されるダイアログに下記を入力し、"+" ボタンをクリックする。
 
-==============================  ===============================
+================================  ===============================
            **Key**                         **Value**                              
-==============================  =============================== 
-constant/transptProperties.nu   "nu [0 2 -1 0 0 0 0] %s" %(nu)                      
-==============================  =============================== 
+================================  =============================== 
+constant/transportProperties.nu   "nu [0 2 -1 0 0 0 0] %s" %(nu)                      
+================================  =============================== 
 
 foamEditKeywordsを変更されたcavity componentは、
 自身にiotype:'in'のFloat型の変数nuを生成する(cavity.nuを生成する)。
@@ -148,7 +149,7 @@ cavity componentのEditから表示されるダイアログに、
 nuが生成されていることが確認できれば、初期値0.1を入力する。
 
 またcavity componentは実行(runメソッド)時に、
-constant/transptPropertiesファイルの項目nuを"nu [0 2 -1 0 0 0 0] x"に変更して、
+constant/transportPropertiesファイルの項目nuを"nu [0 2 -1 0 0 0 0] x"に変更して、
 書き込む。(※ xはcavity.nuの値)
 
 
@@ -175,8 +176,8 @@ press1はpostProcessing/probes/0/pファイルの第1カラムを読み込む(0�
 press1はクラス変数にlatetTimeValueやaverageValue,minValue,maxValueなどを持つ。
 
 
-case_dirの設定、「:ref:`constant/transptProperties内のnuの編集`」、
-「:ref:`function Objectsで取得したデータの取得`」の設定及び、
+case_dirの設定、「 :ref:`constant/transportProperties内のnuの編集`」、
+「 :ref:`function Objectsで取得したデータの取得`」の設定及び、
 cavity.nuへの初期値を入力が完了後、
 cavity componentを右クリックし表示されるポップアップメニューから
 Runを選択し、動作を確認する。
@@ -187,19 +188,19 @@ BroydenSolverの設定
 BroydenSolverを右クリックし表示されるポップアップメニューから、Editを選択する。
 ParametersタブのAdd Parameterボタンをクリックし、表示されるダイアログに下記を入力する。
 
-.. figure:: ../img/broyden_Add_Parameter.png
+.. figure:: ./img/broyden_Add_Parameter.png
     :align: center
 
 
 ConstraintsタブのAdd Constraintボタンをクリックし、表示されるダイアログに下記を入力する。
 
-.. figure:: ../img/constraint_p1.png
+.. figure:: ./img/constraint_p1.png
     :align: center
 
 
 以上の設定を追えると、assy内のcavityとdriverが矢印で接続される。
 
-.. figure:: ../img/cavity_broyden_assy02.png
+.. figure:: ./img/cavity_broyden_assy02.png
     :align: center
 
 
@@ -208,7 +209,7 @@ Assemblyの実行
 Assemblyの実行の前にプロットの設定を行う。
 メニューバーのToolsにあるPlot Variablesを選択する。
 
-.. figure:: ../img/plotSetting.png
+.. figure:: ./img/plotSetting.png
     :align: center
 
 表示されるダイアログにassy.cavity.nuと入力する。
@@ -226,11 +227,13 @@ cavity_broyden_sample.pyと言う名前のファイルを作成し、下記の�
    :language: python
    :linenos:
 
-1-6行目まではimport文。7-20行目でCavity componentクラスを定義。22-35行目でAssemblyを定義。
 
-38行目以降が実際に実行されるコードで、40行目でインスタンスを作成し、41行目で実行をしている。
+cavity_broyden_sample.pyのあるディレクトリで下記コマンドを実行する。
 
+.. code-block:: bash
+   :linenos: 
 
+   python cavity_broyden_sample.py
 
 
 ..
