@@ -69,7 +69,7 @@ Pythonライブラリである。</p>
 次のようなcavity問題において、point1の圧力/密度の値が予め分かっている場合、
 粘性係数(nu)をbroyden法を用いて同定する。</p>
 <div class="figure align-center">
-<img alt="./img/cavity.png" src="./img/cavity.png" />
+<a class="reference internal image-reference" href="_images/cavity.png"><img alt="_images/cavity.png" src="_images/cavity.png" style="width: 80%;" /></a>
 </div>
 </div>
 <div class="section" id="cavity-case">
@@ -132,7 +132,7 @@ controlDictの末尾に以下のfunction Objectの設定を追加する。</p>
         <span class="p">);</span>
         <span class="n">probeLocations</span>
         <span class="p">(</span>
-            <span class="p">(</span> <span class="mf">0.1</span> <span class="mf">0.0925</span> <span class="mf">0.05</span> <span class="p">)</span>
+            <span class="p">(</span> <span class="mf">0.1</span> <span class="mf">0.0925</span> <span class="mf">0.005</span> <span class="p">)</span>
         <span class="p">);</span>
     <span class="p">}</span>
 <span class="p">}</span>
@@ -143,13 +143,12 @@ controlDictの末尾に以下のfunction Objectの設定を追加する。</p>
 <div class="section" id="gui">
 <span id="id1"></span><h2>GUIからの実行方法<a class="headerlink" href="#gui" title="Permalink to this headline">¶</a></h2>
 <p>OpenMDAOユーザガイドの[Getting Started] - [GUI]に示されるようにプロジェクトを開く。
-プロジェクトのウインドウが現れたら、
-右側サイドパネルから&#8221;Assembly&#8221;をデータフローウィンドウにドラッグする。
+プロジェクトのウインドウが現れたら、右側サイドパネルから&#8221;Assembly&#8221;をデータフローウィンドウにドラッグする。
 &#8220;Assembly&#8221;のドラッグ時に表示されるダイアログに、assyと入力する。</p>
 <p>さらにAssemblyのdriverに&#8221;BroydenSolver&#8221;、componentに&#8221;OpenFOAM_wrapper&#8221;をドラッグする。
 &#8220;OpenFOAM_wrapper&#8221;のドラッグ時に表示されるダイアログに、cavityと入力する。</p>
 <div class="figure align-center">
-<img alt="./img/cavity_broyden_assy01.png" src="./img/cavity_broyden_assy01.png" />
+<img alt="_images/cavity_broyden_assy01.png" src="_images/cavity_broyden_assy01.png" />
 </div>
 <div class="section" id="cavity-component">
 <h3>cavity componentの設定<a class="headerlink" href="#cavity-component" title="Permalink to this headline">¶</a></h3>
@@ -414,7 +413,7 @@ cavity_broyden_sample.pyと言う名前のファイルを作成し、下記の�
     </div>
     <div class="footer">
         &copy; Copyright .
-      Last updated on May 28, 2014.
+      Last updated on May 31, 2014.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>

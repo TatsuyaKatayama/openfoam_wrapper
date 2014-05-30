@@ -5,6 +5,13 @@ This is the OpenMDAO wrapper for OpenFOAM with PyFoam.
 
 Comming Soon! Please Wait!
 
+TODO
+----
+1. English Documents.(now only Japanese docs.)
+2. create __init__ method in OpenFOAM_wrapper class.
+3. create test codes.
+4. I try to follow the PEP 8 style guidelines for Python code
+
 
 install
 -------

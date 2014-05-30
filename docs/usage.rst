@@ -18,8 +18,10 @@ OpenFOAMのcavityチュートリアルを用いてパラメータの同定を行
 次のようなcavity問題において、point1の圧力/密度の値が予め分かっている場合、
 粘性係数(nu)をbroyden法を用いて同定する。
 
+
 .. figure:: ./img/cavity.png
-   :align: center
+    :align: center
+    :width: 80%
 
 
 cavity caseの準備
@@ -75,7 +77,7 @@ controlDictの末尾に以下のfunction Objectの設定を追加する。
            );
            probeLocations
            (
-               ( 0.1 0.0925 0.05 )
+               ( 0.1 0.0925 0.005 )
            );
        }
    }
@@ -88,8 +90,7 @@ controlDictの末尾に以下のfunction Objectの設定を追加する。
 GUIからの実行方法
 =================
 OpenMDAOユーザガイドの[Getting Started] - [GUI]に示されるようにプロジェクトを開く。
-プロジェクトのウインドウが現れたら、
-右側サイドパネルから"Assembly"をデータフローウィンドウにドラッグする。
+プロジェクトのウインドウが現れたら、右側サイドパネルから"Assembly"をデータフローウィンドウにドラッグする。
 "Assembly"のドラッグ時に表示されるダイアログに、assyと入力する。
 
 さらにAssemblyのdriverに"BroydenSolver"、componentに"OpenFOAM_wrapper"をドラッグする。
