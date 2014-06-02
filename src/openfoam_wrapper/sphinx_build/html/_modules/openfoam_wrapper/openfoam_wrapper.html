@@ -86,6 +86,20 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_which</span><span class="p">(</span><span class="s">&quot;icoFoam&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;OpenFOAM command is not found. Check $PATH.&quot;</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_dir</span> <span class="o">==</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">caseDir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getPath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">case_dir</span><span class="p">,</span><span class="bp">False</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">caseDir</span><span class="o">==</span><span class="bp">None</span><span class="p">:</span>
+                <span class="c">#type(caseDir) is str or unicode</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span> <span class="o">=</span> <span class="n">SolutionDirectory</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">caseDir</span><span class="p">))</span>
+
+<div class="viewcode-block" id="FoamBaseComponent.check_config"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamBaseComponent.check_config">[docs]</a>    <span class="k">def</span> <span class="nf">check_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_dir</span> <span class="o">==</span> <span class="s">&quot;&quot;</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;Not set self.case_dir.&quot;</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">)</span>
+    
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">controlDict</span><span class="p">()):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> is not found. Check self.case_dir.&quot;</span> <span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">controlDict</span><span class="p">()),</span> <span class="ne">RuntimeError</span><span class="p">)</span>
+</div>
     <span class="k">def</span> <span class="nf">_which</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">cmd</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;which command whith python.&quot;&quot;&quot;</span> 
         <span class="k">def</span> <span class="nf">is_exe</span><span class="p">(</span><span class="n">fpath</span><span class="p">):</span>
@@ -161,6 +175,14 @@
     <span class="n">_variables</span><span class="o">=</span><span class="p">[]</span>
     <span class="n">_ParsedParameterFiles</span><span class="o">=</span><span class="p">{}</span>
     
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override  for class that has default foamEditKeywords&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FoamEditDicts</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamEditKeywords</span> <span class="o">==</span> <span class="p">{}:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_configure_Variables</span><span class="p">()</span>
+            
+    
     <span class="k">def</span> <span class="nf">_getValueNames</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">val</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">val</span><span class="p">[</span><span class="n">val</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s">&quot;%&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">maketrans</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">),</span><span class="s">&quot;()&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">)</span>
         
@@ -175,51 +197,63 @@
                 <span class="k">return</span> <span class="p">(</span><span class="n">fpath</span><span class="p">,</span><span class="n">string</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">kl</span><span class="p">[</span><span class="o">-</span><span class="n">i</span><span class="p">:],</span><span class="s">&quot;.&quot;</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39; was  not found.&quot;</span> <span class="o">%</span> <span class="n">key</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">_configure_ParsedParameterFiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;configure dict of ParsedParameterFiles&quot;&quot;&quot;</span>    
+        <span class="n">olddfiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ParsedParameterFiles</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">dfiles</span> <span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamEditKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">dfile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separateDict</span><span class="p">(</span><span class="n">key</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">dfiles</span> <span class="o">=</span> <span class="n">dfiles</span> <span class="o">+</span> <span class="p">[</span><span class="n">dfile</span><span class="p">]</span>
+            
+        <span class="c">#remove redundant data    </span>
+        <span class="n">dfiles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dfiles</span><span class="p">))</span>
+        
+        <span class="c">#append dfile list</span>
+        <span class="n">appendList</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dfiles</span><span class="p">)</span><span class="o">-</span><span class="nb">set</span><span class="p">(</span><span class="n">olddfiles</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">appendList</span><span class="p">:</span>
+            <span class="n">keyPath</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">keyPath</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_ParsedParameterFiles</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">=</span><span class="n">ParsedParameterFile</span><span class="p">(</span><span class="n">keyPath</span><span class="p">)</span> 
+        
+        <span class="c">#remove dfile list</span>
+        <span class="n">removeList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">olddfiles</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">dfiles</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">removeList</span><span class="p">:</span>
+            <span class="k">del</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ParsedParameterFiles</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+    
+    
+    <span class="k">def</span> <span class="nf">_configure_Variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">oldvariables</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_variables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamEditKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getValueNames</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            
+        <span class="c">#remove redundant data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">))</span> 
+        
+        <span class="c">#append variable list</span>
+        <span class="n">appendList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">oldvariables</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">appendList</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;in&quot;</span><span class="p">))</span>
+        
+        <span class="c">#remove variable list</span>
+        <span class="n">removeList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">oldvariables</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">removeList</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    
     <span class="k">def</span> <span class="nf">_input_trait_modified</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">FoamEditDicts</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_input_trait_modified</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;foamEditKeywords_items&#39;</span> <span class="ow">or</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;foamEditKeywords&#39;</span><span class="p">:</span>
-            <span class="n">oldvariables</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_variables</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="o">=</span><span class="p">[]</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamEditKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getValueNames</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
-                
-            <span class="c">#remove redundant data</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">))</span> 
-            
-            <span class="c">#append variable list</span>
-            <span class="n">appendList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">oldvariables</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">appendList</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;in&quot;</span><span class="p">))</span>
-            
-            <span class="c">#remove variable list</span>
-            <span class="n">removeList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">oldvariables</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">removeList</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-                
-            <span class="n">olddfiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ParsedParameterFiles</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-            <span class="n">dfiles</span> <span class="o">=</span><span class="p">[]</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamEditKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
-                <span class="n">dfile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separateDict</span><span class="p">(</span><span class="n">key</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">dfiles</span> <span class="o">=</span> <span class="n">dfiles</span> <span class="o">+</span> <span class="p">[</span><span class="n">dfile</span><span class="p">]</span>
-                
-            <span class="c">#remove redundant data    </span>
-            <span class="n">dfiles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dfiles</span><span class="p">))</span>
-            
-            <span class="c">#append dfile list</span>
-            <span class="n">appendList</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dfiles</span><span class="p">)</span><span class="o">-</span><span class="nb">set</span><span class="p">(</span><span class="n">olddfiles</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">appendList</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_ParsedParameterFiles</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">=</span><span class="n">ParsedParameterFile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="n">key</span><span class="p">))</span> 
-            
-            <span class="c">#remove dfile list</span>
-            <span class="n">removeList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">olddfiles</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">dfiles</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">removeList</span><span class="p">:</span>
-                <span class="k">del</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ParsedParameterFiles</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_configure_Variables</span><span class="p">()</span> 
+            <span class="c">#self._configure_ParsedParameterFiles()</span>
                                 
 <div class="viewcode-block" id="FoamEditDicts.execute"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamEditDicts.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">editDicts</span><span class="p">()</span>
         </div>
 <div class="viewcode-block" id="FoamEditDicts.editDicts"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamEditDicts.editDicts">[docs]</a>    <span class="k">def</span> <span class="nf">editDicts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamEditKeywords</span> <span class="o">==</span> <span class="p">{}:</span>
+            <span class="k">return</span>
+        
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamEditKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
             <span class="c">#append &quot;self.&quot; &#39;&quot;uniform (%s 0 0)&quot; %(x1)&#39;-&gt;&#39;&quot;uniform (%s 0 0)&quot; %(self.x1)&#39;</span>
             <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s">&quot;%&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
@@ -230,7 +264,10 @@
             <span class="c">#edit ParsedParameterFile</span>
             <span class="n">fdkey</span><span class="p">,</span><span class="n">sdkey</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separateDict</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
             <span class="n">sdkeylist</span> <span class="o">=</span> <span class="n">sdkey</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;.&quot;</span><span class="p">)</span>
-
+            
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">fdkey</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ParsedParameterFiles</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_configure_ParsedParameterFiles</span><span class="p">()</span>
+            
             <span class="n">di</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ParsedParameterFiles</span><span class="p">[</span><span class="n">fdkey</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">sd</span> <span class="ow">in</span> <span class="n">sdkeylist</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
                 <span class="n">di</span> <span class="o">=</span> <span class="n">di</span><span class="p">[</span><span class="n">sd</span><span class="p">]</span>
@@ -247,6 +284,10 @@
         </div>
 <div class="viewcode-block" id="FoamRunAllrun.runAllrun"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamRunAllrun.runAllrun">[docs]</a>    <span class="k">def</span> <span class="nf">runAllrun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="s">&#39;Allrun&#39;</span><span class="p">)]</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="k">return</span>
+        
         <span class="n">cDir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
         <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="c"># Execute the component</span>
@@ -341,30 +382,42 @@
 <span class="sd">       TimelineData is post data with sample command. exampe)&quot;postprocessing/probes&quot;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">foamGetTimelineKeywords</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({},</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;&quot;key&quot; is variables group. &quot;value&quot; is post data path and column number. the &quot;key&quot; is appended automatic as variables group.  example){&quot;f1&quot;:&quot;postProcessing/probes/0/p|1&#39;</span><span class="p">)</span>
-    <span class="n">_resultGroups</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">_TimeLineGroups</span><span class="o">=</span><span class="p">[]</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override  for class that has default foamGetTimelineKeywords&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FoamGetTimeline</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamGetTimelineKeywords</span> <span class="o">==</span> <span class="p">{}:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_configure_TimeLineGroups</span><span class="p">()</span>
+                
+    
+    <span class="k">def</span> <span class="nf">_configure_TimeLineGroups</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">oldTimeLineGroups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_TimeLineGroups</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_TimeLineGroups</span><span class="o">=</span><span class="p">[]</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamGetTimelineKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_TimeLineGroups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_TimeLineGroups</span> <span class="o">+</span> <span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                
+            <span class="c">#remove redundant data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_TimeLineGroups</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_TimeLineGroups</span><span class="p">))</span> 
+            
+            <span class="c">#append TimeLineGroups list</span>
+            <span class="n">appendList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_TimeLineGroups</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">oldTimeLineGroups</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">appendList</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">VarTree</span><span class="p">(</span><span class="n">TimeLineValue</span><span class="p">(),</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;out&quot;</span><span class="p">))</span>
+            
+            <span class="c">#remove TimeLineGroups list</span>
+            <span class="n">removeList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">oldTimeLineGroups</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_TimeLineGroups</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">removeList</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
     
     <span class="k">def</span> <span class="nf">_input_trait_modified</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">FoamGetTimeline</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_input_trait_modified</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;foamGetTimelineKeywords_items&#39;</span> <span class="ow">or</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;foamGetTimelineKeywords&#39;</span><span class="p">:</span>
-            <span class="n">oldresultGroups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="o">=</span><span class="p">[]</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamGetTimelineKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span> <span class="o">+</span> <span class="p">[</span><span class="n">key</span><span class="p">]</span>
-                
-            <span class="c">#remove redundant data</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="p">))</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">_configure_TimeLineGroups</span><span class="p">()</span>
             
-            <span class="c">#append resultGroups list</span>
-            <span class="n">appendList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">oldresultGroups</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">appendList</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">VarTree</span><span class="p">(</span><span class="n">TimeLineValue</span><span class="p">(),</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;out&quot;</span><span class="p">))</span>
-            
-            <span class="c">#remove resultGroups list</span>
-            <span class="n">removeList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">oldresultGroups</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">removeList</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
 <div class="viewcode-block" id="FoamGetTimeline.execute"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamGetTimeline.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">getTimeline</span><span class="p">()</span>
         </div>
@@ -400,27 +453,27 @@
     <span class="sd">&quot;&quot;&quot;OpenFOAM Log Analyzer Component with PyFoam</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">foamAnalyzedKeywords</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">({},</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;&quot;key&quot; is variables group. &quot;value&quot; is logfile name and string picked from log. the &quot;key&quot; is appended automatic as variables group.  example){&quot;f1&quot;:&quot;log.simpleFoam|DICPCG:  Solving for p, Initial residual = (.+?),&quot;}&#39;</span><span class="p">)</span>
-    <span class="n">_resultGroups</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">_ExprGroups</span><span class="o">=</span><span class="p">[]</span>
     
     <span class="k">def</span> <span class="nf">_input_trait_modified</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">FoamAnalyzeLogs</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_input_trait_modified</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;foamAnalyzedKeywords_items&#39;</span> <span class="ow">or</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;foamAnalyzedKeywords&#39;</span><span class="p">:</span>
-            <span class="n">oldresultGroups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="o">=</span><span class="p">[]</span>
+            <span class="n">oldExprGroups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ExprGroups</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ExprGroups</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamAnalyzedKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span> <span class="o">+</span> <span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_ExprGroups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ExprGroups</span> <span class="o">+</span> <span class="p">[</span><span class="n">key</span><span class="p">]</span>
                 
             <span class="c">#remove redundant data</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="p">))</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ExprGroups</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ExprGroups</span><span class="p">))</span> 
             
-            <span class="c">#append resultGroups list</span>
-            <span class="n">appendList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">oldresultGroups</span><span class="p">))</span>
+            <span class="c">#append ExprGroups list</span>
+            <span class="n">appendList</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ExprGroups</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">oldExprGroups</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">appendList</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_trait</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">VarTree</span><span class="p">(</span><span class="n">TimeLineValue</span><span class="p">(),</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;out&quot;</span><span class="p">))</span>
             
-            <span class="c">#remove resultGroups list</span>
-            <span class="n">removeList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">oldresultGroups</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resultGroups</span><span class="p">))</span>
+            <span class="c">#remove ExprGroups list</span>
+            <span class="n">removeList</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">oldExprGroups</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ExprGroups</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">removeList</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">remove_trait</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 
@@ -524,7 +577,7 @@
     </div>
     <div class="footer">
         &copy; Copyright .
-      Last updated on May 31, 2014.
+      Last updated on Jun 03, 2014.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>

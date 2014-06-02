@@ -110,7 +110,11 @@ cavity componentを右クリックし表示されるポップアップメニュ�
 これによりcavity componentは、絶対パスとして、もしくは$FOAM_RUN以下の相対パスとして
 cavityを検索し、認識する。
 
-case_dirを認識したOpenFOAM_wrapperが下記に示す処理を順に行うことで
+.. figure:: ./img/set_cavity_case.png
+    :align: center
+
+
+上記の設定によりcase_dirを認識したOpenFOAM_wrapperが下記に示す処理を順に行うことで
 解析の自動化を実現している。
 
 

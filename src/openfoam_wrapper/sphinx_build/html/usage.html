@@ -158,7 +158,10 @@ controlDictの末尾に以下のfunction Objectの設定を追加する。</p>
 ダイアルが表示されるのでInputタブのcase_dirにcavityと入力する。
 これによりcavity componentは、絶対パスとして、もしくは$FOAM_RUN以下の相対パスとして
 cavityを検索し、認識する。</p>
-<p>case_dirを認識したOpenFOAM_wrapperが下記に示す処理を順に行うことで
+<div class="figure align-center">
+<img alt="_images/set_cavity_case.png" src="_images/set_cavity_case.png" />
+</div>
+<p>上記の設定によりcase_dirを認識したOpenFOAM_wrapperが下記に示す処理を順に行うことで
 解析の自動化を実現している。</p>
 <blockquote>
 <div><ol class="arabic simple">
@@ -413,7 +416,7 @@ cavity_broyden_sample.pyと言う名前のファイルを作成し、下記の�
     </div>
     <div class="footer">
         &copy; Copyright .
-      Last updated on May 31, 2014.
+      Last updated on Jun 03, 2014.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>

@@ -36,6 +36,20 @@ class FoamBaseComponent(Component):
         if not self._which("icoFoam"):
             self.raise_exception("OpenFOAM command is not found. Check $PATH.", RuntimeError)
 
+        if not self.case_dir == '':
+            caseDir = self.getPath(self.case_dir,False)
+            
+            if not caseDir==None:
+                #type(caseDir) is str or unicode
+                self.foam_case = SolutionDirectory(str(caseDir))
+
+    def check_config(self):
+        if not self.foam_case and self.case_dir == "" :
+            self.raise_exception("Not set self.case_dir.", RuntimeError)
+    
+        if not os.path.exists(self.foam_case.controlDict()):
+            self.raise_exception("%s is not found. Check self.case_dir." %(self.foam_case.controlDict()), RuntimeError)
+
     def _which(self,cmd):
         """which command whith python.""" 
         def is_exe(fpath):
@@ -111,6 +125,14 @@ class FoamEditDicts(FoamBaseComponent):
     _variables=[]
     _ParsedParameterFiles={}
     
+    def __init__(self):
+        """Override  for class that has default foamEditKeywords"""
+        super(FoamEditDicts, self).__init__()
+        
+        if not self.foamEditKeywords == {}:
+            self._configure_Variables()
+            
+    
     def _getValueNames(self,val):
         return val[val.rfind("%")+1:].translate(string.maketrans("",""),"()").split(",")
         
@@ -125,51 +147,63 @@ class FoamEditDicts(FoamBaseComponent):
                 return (fpath,string.join(kl[-i:],"."))
         self.raise_exception("'%s' was  not found." % key, RuntimeError)
 
+    def _configure_ParsedParameterFiles(self):
+        """configure dict of ParsedParameterFiles"""    
+        olddfiles = self._ParsedParameterFiles.keys()
+        dfiles =[]
+        for key,val in self.foamEditKeywords.iteritems():
+            dfile = self._separateDict(key)[0]
+            dfiles = dfiles + [dfile]
+            
+        #remove redundant data    
+        dfiles = list(set(dfiles))
+        
+        #append dfile list
+        appendList = list(set(dfiles)-set(olddfiles))
+        for key in appendList:
+            keyPath=os.path.join(self.foam_case.name,key)
+            if os.path.exists(keyPath):
+                self._ParsedParameterFiles[key]=ParsedParameterFile(keyPath) 
+        
+        #remove dfile list
+        removeList=list(set(olddfiles) - set(dfiles))
+        for key in removeList:
+            del(self._ParsedParameterFiles[key])
+    
+    
+    def _configure_Variables(self):
+        oldvariables=self._variables
+        self._variables=[]
+        for key,val in self.foamEditKeywords.iteritems():
+            self._variables = self._variables + self._getValueNames(val)
+            
+        #remove redundant data
+        self._variables=list(set(self._variables)) 
+        
+        #append variable list
+        appendList=list(set(self._variables) - set(oldvariables))
+        for key in appendList:
+            self.add(key,Float(0.0, iotype="in"))
+        
+        #remove variable list
+        removeList=list(set(oldvariables) - set(self._variables))
+        for key in removeList:
+            self.remove(key)
+    
     def _input_trait_modified(self, obj, name, old, new):
         super(FoamEditDicts, self)._input_trait_modified(obj, name, old, new)
 
         if name == 'foamEditKeywords_items' or name == 'foamEditKeywords':
-            oldvariables=self._variables
-            self._variables=[]
-            for key,val in self.foamEditKeywords.iteritems():
-                self._variables = self._variables + self._getValueNames(val)
-                
-            #remove redundant data
-            self._variables=list(set(self._variables)) 
-            
-            #append variable list
-            appendList=list(set(self._variables) - set(oldvariables))
-            for key in appendList:
-                self.add(key,Float(0.0, iotype="in"))
-            
-            #remove variable list
-            removeList=list(set(oldvariables) - set(self._variables))
-            for key in removeList:
-                self.remove(key)
-                
-            olddfiles = self._ParsedParameterFiles.keys()
-            dfiles =[]
-            for key,val in self.foamEditKeywords.iteritems():
-                dfile = self._separateDict(key)[0]
-                dfiles = dfiles + [dfile]
-                
-            #remove redundant data    
-            dfiles = list(set(dfiles))
-            
-            #append dfile list
-            appendList = list(set(dfiles)-set(olddfiles))
-            for key in appendList:
-                self._ParsedParameterFiles[key]=ParsedParameterFile(os.path.join(self.foam_case.name,key)) 
-            
-            #remove dfile list
-            removeList=list(set(olddfiles) - set(dfiles))
-            for key in removeList:
-                del(self._ParsedParameterFiles[key])
+            self._configure_Variables() 
+            #self._configure_ParsedParameterFiles()
                                 
     def execute(self):
         self.editDicts()
         
     def editDicts(self):
+        if self.foamEditKeywords == {}:
+            return
+        
         for key,val in self.foamEditKeywords.iteritems():
             #append "self." '"uniform (%s 0 0)" %(x1)'->'"uniform (%s 0 0)" %(self.x1)'
             if val.rfind("%") == -1:
@@ -180,7 +214,10 @@ class FoamEditDicts(FoamBaseComponent):
             #edit ParsedParameterFile
             fdkey,sdkey = self._separateDict(key)
             sdkeylist = sdkey.split(".")
-
+            
+            if not fdkey in self._ParsedParameterFiles.keys():
+                self._configure_ParsedParameterFiles()
+            
             di = self._ParsedParameterFiles[fdkey]
             for sd in sdkeylist[:-1]:
                 di = di[sd]
@@ -197,6 +234,10 @@ class FoamRunAllrun(FoamBaseComponent,ExternalCode):
         
     def runAllrun(self):
         self.command = [os.path.join(self.foam_case.name,'Allrun')]
+        
+        if not os.path.exists(self.command[0]):
+            return
+        
         cDir = os.getcwd()
         os.chdir(self.foam_case.name)
         # Execute the component
@@ -291,30 +332,42 @@ class FoamGetTimeline(FoamBaseComponent):
        TimelineData is post data with sample command. exampe)"postprocessing/probes"
     """
     foamGetTimelineKeywords = Dict({}, iotype='in', desc='"key" is variables group. "value" is post data path and column number. the "key" is appended automatic as variables group.  example){"f1":"postProcessing/probes/0/p|1')
-    _resultGroups=[]
+    _TimeLineGroups=[]
+    
+    def __init__(self):
+        """Override  for class that has default foamGetTimelineKeywords"""
+        super(FoamGetTimeline, self).__init__()
+        
+        if not self.foamGetTimelineKeywords == {}:
+            self._configure_TimeLineGroups()
+                
+    
+    def _configure_TimeLineGroups(self):
+            oldTimeLineGroups=self._TimeLineGroups
+            self._TimeLineGroups=[]
+            for key,val in self.foamGetTimelineKeywords.iteritems():
+                self._TimeLineGroups = self._TimeLineGroups + [key]
+                
+            #remove redundant data
+            self._TimeLineGroups=list(set(self._TimeLineGroups)) 
+            
+            #append TimeLineGroups list
+            appendList=list(set(self._TimeLineGroups) - set(oldTimeLineGroups))
+            for key in appendList:
+                self.add(key,VarTree(TimeLineValue(), iotype="out"))
+            
+            #remove TimeLineGroups list
+            removeList=list(set(oldTimeLineGroups) - set(self._TimeLineGroups))
+            for key in removeList:
+                self.remove(key)
+
     
     def _input_trait_modified(self, obj, name, old, new):
         super(FoamGetTimeline, self)._input_trait_modified(obj, name, old, new)
 
         if name == 'foamGetTimelineKeywords_items' or name == 'foamGetTimelineKeywords':
-            oldresultGroups=self._resultGroups
-            self._resultGroups=[]
-            for key,val in self.foamGetTimelineKeywords.iteritems():
-                self._resultGroups = self._resultGroups + [key]
-                
-            #remove redundant data
-            self._resultGroups=list(set(self._resultGroups)) 
+            self._configure_TimeLineGroups()
             
-            #append resultGroups list
-            appendList=list(set(self._resultGroups) - set(oldresultGroups))
-            for key in appendList:
-                self.add(key,VarTree(TimeLineValue(), iotype="out"))
-            
-            #remove resultGroups list
-            removeList=list(set(oldresultGroups) - set(self._resultGroups))
-            for key in removeList:
-                self.remove(key)
-
     def execute(self):
         self.getTimeline()
         
@@ -350,27 +403,27 @@ class FoamAnalyzeLogs(FoamBaseComponent):
     """OpenFOAM Log Analyzer Component with PyFoam
     """
     foamAnalyzedKeywords = Dict({}, iotype='in', desc='"key" is variables group. "value" is logfile name and string picked from log. the "key" is appended automatic as variables group.  example){"f1":"log.simpleFoam|DICPCG:  Solving for p, Initial residual = (.+?),"}')
-    _resultGroups=[]
+    _ExprGroups=[]
     
     def _input_trait_modified(self, obj, name, old, new):
         super(FoamAnalyzeLogs, self)._input_trait_modified(obj, name, old, new)
 
         if name == 'foamAnalyzedKeywords_items' or name == 'foamAnalyzedKeywords':
-            oldresultGroups=self._resultGroups
-            self._resultGroups=[]
+            oldExprGroups = self._ExprGroups
+            self._ExprGroups = []
             for key,val in self.foamAnalyzedKeywords.iteritems():
-                self._resultGroups = self._resultGroups + [key]
+                self._ExprGroups = self._ExprGroups + [key]
                 
             #remove redundant data
-            self._resultGroups=list(set(self._resultGroups)) 
+            self._ExprGroups=list(set(self._ExprGroups)) 
             
-            #append resultGroups list
-            appendList=list(set(self._resultGroups) - set(oldresultGroups))
+            #append ExprGroups list
+            appendList = list(set(self._ExprGroups) - set(oldExprGroups))
             for key in appendList:
                 self.add_trait(key,VarTree(TimeLineValue(), iotype="out"))
             
-            #remove resultGroups list
-            removeList=list(set(oldresultGroups) - set(self._resultGroups))
+            #remove ExprGroups list
+            removeList=list(set(oldExprGroups) - set(self._ExprGroups))
             for key in removeList:
                 self.remove_trait(key)
 
