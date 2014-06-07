@@ -1,0 +1,14 @@
+Metadata-Version: 1.1
+Name: openfoam-wrapper
+Version: 0.02
+Summary: This is the OpenMDAO wrapper for OpenFOAM with PyFoam.
+Home-page: UNKNOWN
+Author: TatsuyaKatayama
+Author-email: katayama1227ron@gmail.com
+License: GPLv2
+Download-URL: https://github.com/TatsuyaKatayama/openfoam_wrapper
+Description: UNKNOWN
+Keywords: openmdao
+Platform: UNKNOWN
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering

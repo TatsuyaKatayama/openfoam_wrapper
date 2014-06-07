@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>openfoam_wrapper.test.test_openfoam_wrapper &mdash; openfoam_wrapper 0.01 documentation</title>
+    <title>openfoam_wrapper.test.test_openfoam_wrapper &mdash; openfoam_wrapper 0.02 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.01',
+        VERSION:     '0.02',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="openfoam_wrapper 0.01 documentation" href="../../../index.html" />
+    <link rel="top" title="openfoam_wrapper 0.02 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
   </head>
   <body>
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">openfoam_wrapper 0.01 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">openfoam_wrapper 0.02 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
@@ -48,23 +48,118 @@
           <div class="body">
             
   <h1>Source code for openfoam_wrapper.test.test_openfoam_wrapper</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">tempfile</span>
 <span class="kn">import</span> <span class="nn">unittest</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+
+<span class="kn">from</span> <span class="nn">openmdao.main.datatypes.api</span> <span class="kn">import</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Dict</span>
+
+<span class="kn">from</span> <span class="nn">PyFoam.RunDictionary.SolutionDirectory</span> <span class="kn">import</span> <span class="n">SolutionDirectory</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">openfoam_wrapper.openfoam_wrapper</span> <span class="kn">import</span> <span class="n">OpenFOAM_wrapper</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">pass</span>
 
 
-<span class="k">class</span> <span class="nc">Openfoam_wrapperTestCase</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
-<div class="viewcode-block" id="Openfoam_wrapperTestCase"><a class="viewcode-back" href="../../../srcdocs.html#openfoam_wrapper.test.test_openfoam_wrapper.Openfoam_wrapperTestCase">[docs]</a>
-    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<div class="viewcode-block" id="Openfoam_wrapperTestCase.setUp"><a class="viewcode-back" href="../../../srcdocs.html#openfoam_wrapper.test.test_openfoam_wrapper.Openfoam_wrapperTestCase.setUp">[docs]</a>        <span class="k">pass</span>
+<span class="n">edit_dicts</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;constant/polyMesh/blockMeshDict.vertices[0]&quot;</span><span class="p">:</span><span class="s">&#39;&quot;(</span><span class="si">%s</span><span class="s"> -0.01 0)&quot; %(x0)&#39;</span><span class="p">,</span>
+             <span class="s">u&quot;constant/polyMesh/blockMeshDict.convertToMeters&quot;</span><span class="p">:</span><span class="s">u&#39;&quot;</span><span class="si">%s</span><span class="s">&quot; %(x1)&#39;</span><span class="p">,</span>
+             <span class="s">&quot;0/U.boundaryField.movingWall.value&quot;</span><span class="p">:</span><span class="s">&#39;&quot;uniform (</span><span class="si">%s</span><span class="s"> 0 </span><span class="si">%s</span><span class="s">)&quot; %(x2,x3)&#39;</span><span class="p">}</span>
+
+<span class="n">analysis_logs</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;y0&quot;</span><span class="p">:</span><span class="s">&#39;log.blockMesh|  nCells: (.+)&#39;</span><span class="p">,</span>
+    <span class="s">&quot;y1&quot;</span><span class="p">:</span><span class="s">&quot;log.simpleFoam|DICPCG:  Solving for p, Initial residual = (.+?),&quot;</span><span class="p">}</span>
+
+<span class="n">get_timelines</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;y2&quot;</span><span class="p">:</span><span class="s">&quot;postProcessing/probes/0/p|1&quot;</span><span class="p">,</span>
+             <span class="s">u&quot;constant/polyMesh/blockMeshDict.convertToMeters&quot;</span><span class="p">:</span><span class="s">u&#39;&quot;</span><span class="si">%s</span><span class="s">&quot; %(x1)&#39;</span><span class="p">,</span>
+             <span class="s">&quot;0/U.boundaryField.movingWall.value&quot;</span><span class="p">:</span><span class="s">&#39;&quot;uniform (</span><span class="si">%s</span><span class="s"> 0 </span><span class="si">%s</span><span class="s">)&quot; %(x2,x3)&#39;</span><span class="p">}</span>
+             
+<div class="viewcode-block" id="Cavity"><a class="viewcode-back" href="../../../srcdocs.html#openfoam_wrapper.test.test_openfoam_wrapper.Cavity">[docs]</a><span class="k">class</span> <span class="nc">Cavity</span><span class="p">(</span><span class="n">OpenFOAM_wrapper</span><span class="p">):</span>
+    <span class="n">foamEditKeywords</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">(</span><span class="n">edit_dicts</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;default All&#39;</span><span class="p">)</span>
+    <span class="n">foamEditKeywords</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">(</span><span class="n">edit_dicts</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;default All&#39;</span><span class="p">)</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="o">-</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;class variale&#39;</span><span class="p">)</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.11</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;class variale&#39;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="OpenFOAM_wrapperTestCase"><a class="viewcode-back" href="../../../srcdocs.html#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase">[docs]</a><span class="k">class</span> <span class="nc">OpenFOAM_wrapperTestCase</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+       
+<div class="viewcode-block" id="OpenFOAM_wrapperTestCase.setUp"><a class="viewcode-back" href="../../../srcdocs.html#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">cavityTut</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s">&quot;FOAM_TUTORIALS&quot;</span><span class="p">),</span>
+                                <span class="s">&quot;incompressible/icoFoam/cavity&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cavityTut</span><span class="p">):</span>
+            <span class="n">unittest</span><span class="o">.</span><span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;need $FOAM_TUTORIALS/incompressible/cavity </span><span class="se">\</span>
+<span class="s">                               for unittest.&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">()</span>
+            <span class="n">cavityCase</span> <span class="o">=</span> <span class="n">SolutionDirectory</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span><span class="p">,</span><span class="s">&quot;cavity&quot;</span><span class="p">))</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copytree</span><span class="p">(</span><span class="n">cavityTut</span><span class="p">,</span> <span class="n">cavityCase</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">unittest</span><span class="o">.</span><span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;can not copy cavity case to temp_dir.&quot;</span><span class="p">)</span>   
+                 
+        <span class="c">#create Allrun </span>
+        <span class="n">fp</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cavityCase</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="s">&quot;Allrun&quot;</span><span class="p">),</span><span class="s">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;#!/bin/sh</span><span class="se">\n</span><span class="s">blockMesh&gt;log.blockMesh</span><span class="se">\n</span><span class="s">icoFoam&gt;log.icoFoam</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="n">fp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>   
+        <span class="c">#append controlDict</span>
+        <span class="n">fObj</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">functions</span>
+<span class="s">{</span>
+<span class="s">    probes</span>
+<span class="s">    {</span>
+<span class="s">        type            probes;</span>
+<span class="s">        functionObjectLibs (&quot;libsampling.so&quot;);</span>
+<span class="s">        enabled         true;</span>
+<span class="s">        outputControl   timeStep;</span>
+<span class="s">        outputInterval  1;</span>
+<span class="s">        fields</span>
+<span class="s">        (</span>
+<span class="s">            p U</span>
+<span class="s">        );</span>
+<span class="s">        probeLocations</span>
+<span class="s">        (</span>
+<span class="s">            ( 0.1 0.0925 0.005 )</span>
+<span class="s">        );</span>
+<span class="s">    }</span>
+<span class="s">}</span>
+<span class="s">&quot;&quot;&quot;</span>
+        <span class="n">fp</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">cavityCase</span><span class="o">.</span><span class="n">controlDict</span><span class="p">(),</span><span class="s">&#39;a&#39;</span><span class="p">)</span>
+        <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">fObj</span><span class="p">)</span>
+        <span class="n">fp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        </div>
+<div class="viewcode-block" id="OpenFOAM_wrapperTestCase.tearDown"><a class="viewcode-back" href="../../../srcdocs.html#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.tearDown">[docs]</a>    <span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="OpenFOAM_wrapperTestCase.test_init"><a class="viewcode-back" href="../../../srcdocs.html#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.test_init">[docs]</a>    <span class="k">def</span> <span class="nf">test_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;check variables(x0,x1,x2,x3,y0,y1) added automation.&quot;&quot;&quot;</span>
         
-    <span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-<div class="viewcode-block" id="Openfoam_wrapperTestCase.tearDown"><a class="viewcode-back" href="../../../srcdocs.html#openfoam_wrapper.test.test_openfoam_wrapper.Openfoam_wrapperTestCase.tearDown">[docs]</a>        <span class="k">pass</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cavity</span> <span class="o">=</span> <span class="n">Cavity</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+            <span class="n">unittest</span><span class="o">.</span><span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;not found icoFoam. check the $PATH.&quot;</span><span class="p">)</span>
+
+        <span class="c">#check variable x0,x1,x2,x3 in self.cavity instance </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cavity</span><span class="p">,</span> <span class="s">&quot;x0&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cavity</span><span class="p">,</span> <span class="s">&quot;x1&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cavity</span><span class="p">,</span> <span class="s">&quot;x2&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cavity</span><span class="p">,</span> <span class="s">&quot;x3&quot;</span><span class="p">))</span>
+        <span class="c">#check variable x0,x1,x2,x3 in Cavity Class.                       </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">Cavity</span><span class="p">,</span> <span class="s">&quot;x0&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">Cavity</span><span class="p">,</span> <span class="s">&quot;x1&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">Cavity</span><span class="p">,</span> <span class="s">&quot;x2&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">Cavity</span><span class="p">,</span> <span class="s">&quot;x3&quot;</span><span class="p">))</span>
+        <span class="c">#check variable y0,y1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cavity</span><span class="p">,</span> <span class="s">&quot;y0&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cavity</span><span class="p">,</span> <span class="s">&quot;y1&quot;</span><span class="p">))</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">cavity</span><span class="o">.</span><span class="n">case_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span><span class="p">,</span><span class="s">&quot;cavity&quot;</span><span class="p">)</span>
         
     <span class="c"># add some tests here...</span>
     
     <span class="c">#def test_Openfoam_wrapper(self):</span>
         <span class="c">#pass</span>
-        
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span></div></div>
+        </div></div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">unittest</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
     
 </pre></div>
@@ -100,13 +195,13 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">openfoam_wrapper 0.01 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">openfoam_wrapper 0.02 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright .
-      Last updated on Jun 03, 2014.
+      Last updated on Jun 07, 2014.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Source Documentation &mdash; openfoam_wrapper 0.01 documentation</title>
+    <title>Source Documentation &mdash; openfoam_wrapper 0.02 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.01',
+        VERSION:     '0.02',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="openfoam_wrapper 0.01 documentation" href="index.html" />
+    <link rel="top" title="openfoam_wrapper 0.02 documentation" href="index.html" />
     <link rel="next" title="Package Metadata" href="pkgdocs.html" />
     <link rel="prev" title="Usage Guide" href="usage.html" /> 
   </head>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="usage.html" title="Usage Guide"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">openfoam_wrapper 0.01 documentation</a> &raquo;</li> 
+        <li><a href="index.html">openfoam_wrapper 0.02 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -440,18 +440,68 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
 <div class="section" id="module-openfoam_wrapper.test.test_openfoam_wrapper">
 <span id="test-openfoam-wrapper-py"></span><span id="openfoam-wrapper-test-test-openfoam-wrapper-py"></span><span id="index-1"></span><h2>test_openfoam_wrapper.py<a class="headerlink" href="#module-openfoam_wrapper.test.test_openfoam_wrapper" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="openfoam_wrapper.test.test_openfoam_wrapper.Openfoam_wrapperTestCase">
-<em class="property">class </em><tt class="descclassname">openfoam_wrapper.test.test_openfoam_wrapper.</tt><tt class="descname">Openfoam_wrapperTestCase</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#Openfoam_wrapperTestCase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.Openfoam_wrapperTestCase" title="Permalink to this definition">¶</a></dt>
+<dt id="openfoam_wrapper.test.test_openfoam_wrapper.Cavity">
+<em class="property">class </em><tt class="descclassname">openfoam_wrapper.test.test_openfoam_wrapper.</tt><tt class="descname">Cavity</tt><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#Cavity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.Cavity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#openfoam_wrapper.openfoam_wrapper.OpenFOAM_wrapper" title="openfoam_wrapper.openfoam_wrapper.OpenFOAM_wrapper"><tt class="xref py py-class docutils literal"><span class="pre">openfoam_wrapper.openfoam_wrapper.OpenFOAM_wrapper</span></tt></a></p>
+<dl class="docutils">
+<dt><em>Dict</em> <strong>foamEditKeywords</strong></dt>
+<dd><p class="first">default All</p>
+<ul class="last simple">
+<li>default:  &#8216;{&#8216;0/U.boundaryField.movingWall.value&#8217;: &#8216;&#8220;uniform (%s 0 %s)&#8221; %(x2,x3)&#8217;, u&#8217;constant/polyMesh/blockMeshDict.convertToMeters&#8217;: u&#8217;&#8221;%s&#8221; %(x1)&#8217;, &#8216;constant/polyMesh/blockMeshDict.vertices[0]&#8217;: &#8216;&#8221;(%s -0.01 0)&#8221; %(x0)&#8217;}&#8217;</li>
+<li>iotype:  &#8216;in&#8217;</li>
+</ul>
+</dd>
+<dt><em>Bool</em> <strong>force_fd</strong></dt>
+<dd><p class="first">If True, always finite difference this component.</p>
+<ul class="last simple">
+<li>default:  &#8216;True&#8217;</li>
+<li>iotype:  &#8216;in&#8217;</li>
+<li>deriv_ignore:  True</li>
+<li>framework_var:  True</li>
+<li>vartypename:  &#8216;Bool&#8217;</li>
+<li>assumed_default:  False</li>
+</ul>
+</dd>
+<dt><em>Float</em> <strong>x0</strong></dt>
+<dd><p class="first">class variale</p>
+<ul class="last simple">
+<li>default:  &#8216;-0.01&#8217;</li>
+<li>iotype:  &#8216;in&#8217;</li>
+<li>vartypename:  &#8216;Float&#8217;</li>
+<li>assumed_default:  False</li>
+</ul>
+</dd>
+<dt><em>Float</em> <strong>x1</strong></dt>
+<dd><p class="first">class variale</p>
+<ul class="last simple">
+<li>default:  &#8216;0.11&#8217;</li>
+<li>iotype:  &#8216;in&#8217;</li>
+<li>vartypename:  &#8216;Float&#8217;</li>
+<li>assumed_default:  False</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase">
+<em class="property">class </em><tt class="descclassname">openfoam_wrapper.test.test_openfoam_wrapper.</tt><tt class="descname">OpenFOAM_wrapperTestCase</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#OpenFOAM_wrapperTestCase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></tt></p>
 <dl class="method">
-<dt id="openfoam_wrapper.test.test_openfoam_wrapper.Openfoam_wrapperTestCase.setUp">
-<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#Openfoam_wrapperTestCase.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.Openfoam_wrapperTestCase.setUp" title="Permalink to this definition">¶</a></dt>
+<dt id="openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#OpenFOAM_wrapperTestCase.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.setUp" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="openfoam_wrapper.test.test_openfoam_wrapper.Openfoam_wrapperTestCase.tearDown">
-<tt class="descname">tearDown</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#Openfoam_wrapperTestCase.tearDown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.Openfoam_wrapperTestCase.tearDown" title="Permalink to this definition">¶</a></dt>
+<dt id="openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.tearDown">
+<tt class="descname">tearDown</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#OpenFOAM_wrapperTestCase.tearDown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.tearDown" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.test_init">
+<tt class="descname">test_init</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#OpenFOAM_wrapperTestCase.test_init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.test_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>check variables(x0,x1,x2,x3,y0,y1) added automation.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -516,12 +566,12 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
         <li class="right" >
           <a href="usage.html" title="Usage Guide"
              >previous</a> |</li>
-        <li><a href="index.html">openfoam_wrapper 0.01 documentation</a> &raquo;</li> 
+        <li><a href="index.html">openfoam_wrapper 0.02 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright .
-      Last updated on Jun 03, 2014.
+      Last updated on Jun 07, 2014.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>

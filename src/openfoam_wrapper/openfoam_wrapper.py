@@ -163,12 +163,12 @@ class FoamEditDicts(FoamBaseComponent):
         for key in appendList:
             keyPath=os.path.join(self.foam_case.name,key)
             if os.path.exists(keyPath):
-                self._ParsedParameterFiles[key]=ParsedParameterFile(keyPath) 
+                self._ParsedParameterFiles[str(key)]=ParsedParameterFile(keyPath) 
         
         #remove dfile list
         removeList=list(set(olddfiles) - set(dfiles))
         for key in removeList:
-            del(self._ParsedParameterFiles[key])
+            del(self._ParsedParameterFiles[str(key)])
     
     
     def _configure_Variables(self):
@@ -218,11 +218,18 @@ class FoamEditDicts(FoamBaseComponent):
             if not fdkey in self._ParsedParameterFiles.keys():
                 self._configure_ParsedParameterFiles()
             
-            di = self._ParsedParameterFiles[fdkey]
+            di = self._ParsedParameterFiles[str(fdkey)]
             for sd in sdkeylist[:-1]:
                 di = di[sd]
-            di[sdkeylist[-1]] = eval(val)
-        
+                
+            newkey = sdkeylist[-1]
+            si = newkey.rfind("[")
+            sj = newkey.rfind("]")
+            if si > 0 and sj > 0:
+                di[newkey[:si]][int(newkey[si+1:sj])] = eval(str(val))            
+            else:
+                di[newkey] = eval(str(val))
+
         # write     
         for pf in  self._ParsedParameterFiles.itervalues():
             pf.writeFile()   
@@ -404,29 +411,40 @@ class FoamAnalyzeLogs(FoamBaseComponent):
     """
     foamAnalyzedKeywords = Dict({}, iotype='in', desc='"key" is variables group. "value" is logfile name and string picked from log. the "key" is appended automatic as variables group.  example){"f1":"log.simpleFoam|DICPCG:  Solving for p, Initial residual = (.+?),"}')
     _ExprGroups=[]
-    
+
+    def __init__(self):
+        """Override  for class that has default foamAnalyzedKeywords"""
+        super(FoamAnalyzeLogs, self).__init__()
+        
+        if not self.foamAnalyzedKeywords == {}:
+            self._configure_ExprGroups()
+
+    def _configure_ExprGroups(self):
+        oldExprGroups = self._ExprGroups
+        self._ExprGroups = []
+        for key,val in self.foamAnalyzedKeywords.iteritems():
+            self._ExprGroups = self._ExprGroups + [key]
+            
+        #remove redundant data
+        self._ExprGroups=list(set(self._ExprGroups)) 
+        
+        #append ExprGroups list
+        appendList = list(set(self._ExprGroups) - set(oldExprGroups))
+        for key in appendList:
+            self.add_trait(key,VarTree(TimeLineValue(), iotype="out"))
+        
+        #remove ExprGroups list
+        removeList=list(set(oldExprGroups) - set(self._ExprGroups))
+        for key in removeList:
+            self.remove_trait(key)
+        
+
     def _input_trait_modified(self, obj, name, old, new):
         super(FoamAnalyzeLogs, self)._input_trait_modified(obj, name, old, new)
 
         if name == 'foamAnalyzedKeywords_items' or name == 'foamAnalyzedKeywords':
-            oldExprGroups = self._ExprGroups
-            self._ExprGroups = []
-            for key,val in self.foamAnalyzedKeywords.iteritems():
-                self._ExprGroups = self._ExprGroups + [key]
-                
-            #remove redundant data
-            self._ExprGroups=list(set(self._ExprGroups)) 
+            self._configure_ExprGroups()
             
-            #append ExprGroups list
-            appendList = list(set(self._ExprGroups) - set(oldExprGroups))
-            for key in appendList:
-                self.add_trait(key,VarTree(TimeLineValue(), iotype="out"))
-            
-            #remove ExprGroups list
-            removeList=list(set(oldExprGroups) - set(self._ExprGroups))
-            for key in removeList:
-                self.remove_trait(key)
-
     def execute(self):
         self.analyzeLogs()
     
@@ -444,6 +462,7 @@ class FoamAnalyzeLogs(FoamBaseComponent):
 
             if not FoamLogAnalyzers.has_key(logname):
                 FoamLogAnalyzers[logname] = FoamLogAnalyzer(progress=True)
+                
             FoamLogAnalyzers[logname].addAnalyzer(key, lineAnalyzers[key])
 
         # LogAnalyzerApplication run            
