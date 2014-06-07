@@ -65,12 +65,11 @@ kwargs = {'author': 'TatsuyaKatayama',
                                        'sphinx_build/html/_sources/srcdocs.txt',
                                        'sphinx_build/html/_sources/index.txt',
                                        'test/test_openfoam_wrapper.py',
-                                       'test/__init__.py',
-                                       'test/test_openfoam_wrapper.py~']},
+                                       'test/__init__.py']},
  'package_dir': {'': 'src'},
  'packages': ['openfoam_wrapper', 'openfoam_wrapper.test'],
  'url': '',
- 'version': '0.02',
+ 'version': '0.03',
  'zip_safe': False}
 
 

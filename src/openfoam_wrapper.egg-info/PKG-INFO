@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: openfoam-wrapper
-Version: 0.02
+Version: 0.03
 Summary: This is the OpenMDAO wrapper for OpenFOAM with PyFoam.
 Home-page: UNKNOWN
 Author: TatsuyaKatayama

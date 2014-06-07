@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Usage Guide &mdash; openfoam_wrapper 0.02 documentation</title>
+    <title>Usage Guide &mdash; openfoam_wrapper 0.03 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.02',
+        VERSION:     '0.03',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="openfoam_wrapper 0.02 documentation" href="index.html" />
+    <link rel="top" title="openfoam_wrapper 0.03 documentation" href="index.html" />
     <link rel="next" title="Source Documentation" href="srcdocs.html" />
     <link rel="prev" title="openfoam_wrapper Documentation" href="index.html" /> 
   </head>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="index.html" title="openfoam_wrapper Documentation"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">openfoam_wrapper 0.02 documentation</a> &raquo;</li> 
+        <li><a href="index.html">openfoam_wrapper 0.03 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -302,7 +302,8 @@ cavity_broyden_sample.pyと言う名前のファイルを作成し、下記の�
 28
 29
 30
-31</pre></div></td><td class="code"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">openfoam_wrapper.openfoam_wrapper</span> <span class="kn">import</span> <span class="n">OpenFOAM_wrapper</span>
+31
+32</pre></div></td><td class="code"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">openfoam_wrapper.openfoam_wrapper</span> <span class="kn">import</span> <span class="n">OpenFOAM_wrapper</span>
 
 <span class="kn">from</span> <span class="nn">openmdao.lib.drivers.api</span> <span class="kn">import</span> <span class="n">BroydenSolver</span>
 <span class="kn">from</span> <span class="nn">openmdao.main.api</span> <span class="kn">import</span> <span class="n">Assembly</span>
@@ -320,10 +321,11 @@ cavity_broyden_sample.pyと言う名前のファイルを作成し、下記の�
         <span class="bp">self</span><span class="o">.</span><span class="n">cavity</span><span class="o">.</span><span class="n">case_dir</span> <span class="o">=</span> <span class="s">&quot;cavity&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cavity</span><span class="o">.</span><span class="n">foamEditKeywords</span><span class="p">[</span><span class="s">&#39;constant/transportProperties.nu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&quot;nu [0 2 -1 0 0 0 0] </span><span class="si">%s</span><span class="s">&quot; %(nu)&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cavity</span><span class="o">.</span><span class="n">foamGetTimelineKeywords</span><span class="p">[</span><span class="s">&#39;press1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;postProcessing/probes/0/p|1&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cavity</span><span class="o">.</span><span class="n">nu</span> <span class="o">=</span> <span class="mf">0.1</span>
 
         <span class="c">#edit driver</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">workflow</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;cavity&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="s">&#39;cavity.nu&#39;</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">scaler</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="s">&#39;cavity.nu&#39;</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">scaler</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="s">&#39;cavity.press1.latestTimeValue = 2.9242&#39;</span><span class="p">)</span>
 
         
@@ -411,12 +413,12 @@ cavity_broyden_sample.pyと言う名前のファイルを作成し、下記の�
         <li class="right" >
           <a href="index.html" title="openfoam_wrapper Documentation"
              >previous</a> |</li>
-        <li><a href="index.html">openfoam_wrapper 0.02 documentation</a> &raquo;</li> 
+        <li><a href="index.html">openfoam_wrapper 0.03 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright .
-      Last updated on Jun 07, 2014.
+      Last updated on Jun 08, 2014.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>

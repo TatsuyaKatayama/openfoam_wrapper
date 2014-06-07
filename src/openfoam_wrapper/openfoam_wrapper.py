@@ -134,6 +134,7 @@ class FoamEditDicts(FoamBaseComponent):
             
     
     def _getValueNames(self,val):
+        val = str(val)
         return val[val.rfind("%")+1:].translate(string.maketrans("",""),"()").split(",")
         
     def _separateDict(self,key):
@@ -459,10 +460,8 @@ class FoamAnalyzeLogs(FoamBaseComponent):
         for key,val in self.foamAnalyzedKeywords.iteritems():
             logname,expt = val.split("|",1)
             lineAnalyzers[key] =  GeneralSimpleLineAnalyzer(key, expt, doFiles=False)  
-
             if not FoamLogAnalyzers.has_key(logname):
                 FoamLogAnalyzers[logname] = FoamLogAnalyzer(progress=True)
-                
             FoamLogAnalyzers[logname].addAnalyzer(key, lineAnalyzers[key])
 
         # LogAnalyzerApplication run            
@@ -497,7 +496,7 @@ class OpenFOAM_wrapper(FoamClearCase, FoamEditDicts, FoamRunAllrun, FoamGetTimel
             1. clear Case
             2. Edit Dict
             3. execute Allrun
-            4. log Analysis    
+            4. get timeLines. (probes etc)    
             5. log Analysis
                
         """

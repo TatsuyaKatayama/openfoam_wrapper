@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Source Documentation &mdash; openfoam_wrapper 0.02 documentation</title>
+    <title>Source Documentation &mdash; openfoam_wrapper 0.03 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.02',
+        VERSION:     '0.03',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="openfoam_wrapper 0.02 documentation" href="index.html" />
+    <link rel="top" title="openfoam_wrapper 0.03 documentation" href="index.html" />
     <link rel="next" title="Package Metadata" href="pkgdocs.html" />
     <link rel="prev" title="Usage Guide" href="usage.html" /> 
   </head>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="usage.html" title="Usage Guide"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">openfoam_wrapper 0.02 documentation</a> &raquo;</li> 
+        <li><a href="index.html">openfoam_wrapper 0.03 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -369,7 +369,7 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
 <li>clear Case</li>
 <li>Edit Dict</li>
 <li>execute Allrun</li>
-<li>log Analysis</li>
+<li>get timeLines. (probes etc)</li>
 <li>log Analysis</li>
 </ol>
 </dd>
@@ -443,14 +443,28 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
 <dt id="openfoam_wrapper.test.test_openfoam_wrapper.Cavity">
 <em class="property">class </em><tt class="descclassname">openfoam_wrapper.test.test_openfoam_wrapper.</tt><tt class="descname">Cavity</tt><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#Cavity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.Cavity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#openfoam_wrapper.openfoam_wrapper.OpenFOAM_wrapper" title="openfoam_wrapper.openfoam_wrapper.OpenFOAM_wrapper"><tt class="xref py py-class docutils literal"><span class="pre">openfoam_wrapper.openfoam_wrapper.OpenFOAM_wrapper</span></tt></a></p>
-<dl class="docutils">
-<dt><em>Dict</em> <strong>foamEditKeywords</strong></dt>
-<dd><p class="first">default All</p>
-<ul class="last simple">
+<p><em>Dict</em> <strong>foamAnalyzedKeywords</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>default:  &#8216;{u&#8217;y0&#8217;: u&#8217;log.icoFoam|DICPCG:  Solving for p, Initial residual = (.+?),&#8217;}&#8217;</li>
+<li>iotype:  &#8216;in&#8217;</li>
+</ul>
+</div></blockquote>
+<p><em>Dict</em> <strong>foamEditKeywords</strong></p>
+<blockquote>
+<div><ul class="simple">
 <li>default:  &#8216;{&#8216;0/U.boundaryField.movingWall.value&#8217;: &#8216;&#8220;uniform (%s 0 %s)&#8221; %(x2,x3)&#8217;, u&#8217;constant/polyMesh/blockMeshDict.convertToMeters&#8217;: u&#8217;&#8221;%s&#8221; %(x1)&#8217;, &#8216;constant/polyMesh/blockMeshDict.vertices[0]&#8217;: &#8216;&#8221;(%s -0.01 0)&#8221; %(x0)&#8217;}&#8217;</li>
 <li>iotype:  &#8216;in&#8217;</li>
 </ul>
-</dd>
+</div></blockquote>
+<p><em>Dict</em> <strong>foamGetTimelineKeywords</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>default:  &#8216;{&#8216;y1&#8217;: &#8216;postProcessing/probes/0/p|1&#8217;, u&#8217;y2&#8217;: u&#8217;postProcessing/probes/0/U|2&#8217;}&#8217;</li>
+<li>iotype:  &#8216;in&#8217;</li>
+</ul>
+</div></blockquote>
+<dl class="docutils">
 <dt><em>Bool</em> <strong>force_fd</strong></dt>
 <dd><p class="first">If True, always finite difference this component.</p>
 <ul class="last simple">
@@ -498,9 +512,9 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.test_init">
-<tt class="descname">test_init</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#OpenFOAM_wrapperTestCase.test_init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.test_init" title="Permalink to this definition">¶</a></dt>
-<dd><p>check variables(x0,x1,x2,x3,y0,y1) added automation.</p>
+<dt id="openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.test_standard">
+<tt class="descname">test_standard</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#OpenFOAM_wrapperTestCase.test_standard"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.test_standard" title="Permalink to this definition">¶</a></dt>
+<dd><p>standard check</p>
 </dd></dl>
 
 </dd></dl>
@@ -566,12 +580,12 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
         <li class="right" >
           <a href="usage.html" title="Usage Guide"
              >previous</a> |</li>
-        <li><a href="index.html">openfoam_wrapper 0.02 documentation</a> &raquo;</li> 
+        <li><a href="index.html">openfoam_wrapper 0.03 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright .
-      Last updated on Jun 07, 2014.
+      Last updated on Jun 08, 2014.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>

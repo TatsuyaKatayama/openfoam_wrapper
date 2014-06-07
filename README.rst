@@ -8,13 +8,12 @@ Comming Soon! Please Wait!
 TODO
 ----
 1. English Documents.(now only Japanese docs.)
-2. create test codes.
-3. I try to follow the PEP 8 style guidelines for Python code
+2. I try to follow the PEP 8 style guidelines for Python code
 
 
 install
 -------
-install from TatsuyaKatayama github repository, type:
+install with pip from TatsuyaKatayama github repository, type:
 
 pip install git+https://github.com/TatsuyaKatayama/openfoam_wrapper.git
 

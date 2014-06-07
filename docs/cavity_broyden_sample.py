@@ -16,10 +16,11 @@ class SolutionAssembly(Assembly):
         self.cavity.case_dir = "cavity"
         self.cavity.foamEditKeywords['constant/transportProperties.nu'] = '"nu [0 2 -1 0 0 0 0] %s" %(nu)'
         self.cavity.foamGetTimelineKeywords['press1'] = 'postProcessing/probes/0/p|1'
+        self.cavity.nu = 0.1
 
         #edit driver
         self.driver.workflow.add('cavity')
-        self.driver.add_parameter('cavity.nu', low=0.0001, high=0.1, scaler=0.001)
+        self.driver.add_parameter('cavity.nu', low=0.0001, high=0.1, scaler=0.01)
         self.driver.add_constraint('cavity.press1.latestTimeValue = 2.9242')
 
         

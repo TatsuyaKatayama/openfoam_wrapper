@@ -63,5 +63,5 @@ Package Metadata
 
 - **summary:** This is the OpenMDAO wrapper for OpenFOAM with PyFoam.
 
-- **version:** 0.02
+- **version:** 0.03
 

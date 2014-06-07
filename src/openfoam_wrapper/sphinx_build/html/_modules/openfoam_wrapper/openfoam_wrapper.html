@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>openfoam_wrapper.openfoam_wrapper &mdash; openfoam_wrapper 0.02 documentation</title>
+    <title>openfoam_wrapper.openfoam_wrapper &mdash; openfoam_wrapper 0.03 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.02',
+        VERSION:     '0.03',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="openfoam_wrapper 0.02 documentation" href="../../index.html" />
+    <link rel="top" title="openfoam_wrapper 0.03 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" /> 
   </head>
   <body>
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">openfoam_wrapper 0.02 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">openfoam_wrapper 0.03 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
@@ -184,6 +184,7 @@
             
     
     <span class="k">def</span> <span class="nf">_getValueNames</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">val</span><span class="p">):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">val</span><span class="p">[</span><span class="n">val</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s">&quot;%&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">maketrans</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">),</span><span class="s">&quot;()&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">)</span>
         
     <span class="k">def</span> <span class="nf">_separateDict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">key</span><span class="p">):</span>
@@ -509,10 +510,8 @@
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">foamAnalyzedKeywords</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
             <span class="n">logname</span><span class="p">,</span><span class="n">expt</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;|&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
             <span class="n">lineAnalyzers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span>  <span class="n">GeneralSimpleLineAnalyzer</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">expt</span><span class="p">,</span> <span class="n">doFiles</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>  
-
             <span class="k">if</span> <span class="ow">not</span> <span class="n">FoamLogAnalyzers</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">logname</span><span class="p">):</span>
                 <span class="n">FoamLogAnalyzers</span><span class="p">[</span><span class="n">logname</span><span class="p">]</span> <span class="o">=</span> <span class="n">FoamLogAnalyzer</span><span class="p">(</span><span class="n">progress</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-                
             <span class="n">FoamLogAnalyzers</span><span class="p">[</span><span class="n">logname</span><span class="p">]</span><span class="o">.</span><span class="n">addAnalyzer</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">lineAnalyzers</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
 
         <span class="c"># LogAnalyzerApplication run            </span>
@@ -547,7 +546,7 @@
 <span class="sd">            1. clear Case</span>
 <span class="sd">            2. Edit Dict</span>
 <span class="sd">            3. execute Allrun</span>
-<span class="sd">            4. log Analysis    </span>
+<span class="sd">            4. get timeLines. (probes etc)    </span>
 <span class="sd">            5. log Analysis</span>
 <span class="sd">               </span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -590,13 +589,13 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">openfoam_wrapper 0.02 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">openfoam_wrapper 0.03 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright .
-      Last updated on Jun 07, 2014.
+      Last updated on Jun 08, 2014.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>

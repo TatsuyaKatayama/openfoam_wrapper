@@ -1,5 +1,5 @@
 MANIFEST.in
-README
+README.rst
 setup.cfg
 setup.py
 src/openfoam_wrapper/__init__.py
