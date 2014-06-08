@@ -56,18 +56,13 @@
   <div class="section" id="usage-guide">
 <h1>Usage Guide<a class="headerlink" href="#usage-guide" title="Permalink to this headline">¶</a></h1>
 <p>本プラグインはPyFoamを用いたOpenFOAMのラッパーである。
-OpenFOAMはESIグループのOpenCFD社とOpenFOAM財団開発している
-オープンソースCFD(数値流体力学)ソフトウェアで、
-PyFoamはOpenFOAMの実行を制御し、データを取り扱うための
-Pythonライブラリである。</p>
+OpenFOAMはESIグループのOpenCFD社とOpenFOAM財団開発しているオープンソースCFD(数値流体力学)ソフトウェアで、PyFoamはOpenFOAMの実行を制御し、データを取り扱うためのPythonライブラリである。</p>
 <p>本プラグインはOpenMDAOのGUIからOpenFOAMを使うために作られたcomponentである。</p>
-<p>PyFoamライブラリを用いてPython Scriptを作成する方が
-自由度の高く、複雑なモデルを構築できる。</p>
+<p>PyFoamライブラリを用いてPython Scriptを作成する方が自由度の高く、複雑なモデルを構築できる。</p>
 <div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
 <p>OpenFOAMのcavityチュートリアルを用いてパラメータの同定を行う。
-次のようなcavity問題において、point1の圧力/密度の値が予め分かっている場合、
-粘性係数(nu)をbroyden法を用いて同定する。</p>
+次のようなcavity問題において、point1の圧力/密度の値が予め分かっている場合、動粘度(nu)をbroyden法を用いて同定する。</p>
 <div class="figure align-center">
 <a class="reference internal image-reference" href="_images/cavity.png"><img alt="_images/cavity.png" src="_images/cavity.png" style="width: 80%;" /></a>
 </div>
@@ -87,9 +82,8 @@ cp -r <span class="nv">$FOAM_TUTORIALS</span>/incompressible/icoFoam/cavity .
 <div class="highlight-bash"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1</pre></div></td><td class="code"><div class="highlight"><pre>blockMesh
 </pre></div>
 </td></tr></table></div>
-<p>自動化を行うためのAllrunファイルを作成する(OpenFOAM_wrapperで利用するため)
-今回は格子の変更は伴わないため、ソルバの実行を記したファイルを用意し、
-実行権限を与える。</p>
+<p>自動化を行うためのAllrunファイルを作成する(OpenFOAM_wrapperで利用するため)。
+今回は格子の変更は伴わないため、ソルバの実行を記したファイルを用意し、実行権限を与える。</p>
 <div class="highlight-bash"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
 3</pre></div></td><td class="code"><div class="highlight"><pre><span class="nb">echo</span> <span class="s1">&#39;#!/bin/sh&#39;</span> &gt;Allrun
@@ -97,8 +91,7 @@ cp -r <span class="nv">$FOAM_TUTORIALS</span>/incompressible/icoFoam/cavity .
 chmod +x Allrun
 </pre></div>
 </td></tr></table></div>
-<p>最後に、point1の圧力値を取得するため
-controlDictの末尾に以下のfunction Objectの設定を追加する。</p>
+<p>最後に、point1の圧力値を取得するため、controlDictの末尾に以下のfunction Objectの設定を追加する。</p>
 <div class="highlight-cpp"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
  3
@@ -151,18 +144,16 @@ controlDictの末尾に以下のfunction Objectの設定を追加する。</p>
 <img alt="_images/cavity_broyden_assy01.png" src="_images/cavity_broyden_assy01.png" />
 </div>
 <div class="section" id="cavity-component">
-<h3>cavity componentの設定<a class="headerlink" href="#cavity-component" title="Permalink to this headline">¶</a></h3>
+<h3>cavity_componentの設定<a class="headerlink" href="#cavity-component" title="Permalink to this headline">¶</a></h3>
 <p>まずは、OpenFOAM_wrapperクラスのインスタンスに、
 対象の解析caseディレクトリを指定する。</p>
-<p>cavity componentを右クリックし表示されるポップアップメニューから、Editを選択する。
+<p>cavity_componentを右クリックし表示されるポップアップメニューから、Editを選択する。
 ダイアルが表示されるのでInputタブのcase_dirにcavityと入力する。
-これによりcavity componentは、絶対パスとして、もしくは$FOAM_RUN以下の相対パスとして
-cavityを検索し、認識する。</p>
+これによりcavity_componentは、絶対パスとして、もしくは$FOAM_RUN以下の相対パスとしてcavityを検索し、認識する。</p>
 <div class="figure align-center">
 <img alt="_images/set_cavity_case.png" src="_images/set_cavity_case.png" />
 </div>
-<p>上記の設定によりcase_dirを認識したOpenFOAM_wrapperが下記に示す処理を順に行うことで
-解析の自動化を実現している。</p>
+<p>上記の設定によりcase_dirを認識したOpenFOAM_wrapperが下記に示す処理を順に行うことで解析の自動化を実現している。</p>
 <blockquote>
 <div><ol class="arabic simple">
 <li>解析結果の消去</li>
@@ -172,14 +163,11 @@ cavityを検索し、認識する。</p>
 <li>function Objectsで取得したデータの取得</li>
 </ol>
 </div></blockquote>
-<p>今回「1. 解析結果の消去」「3. Allrunの実行」についてはデフォルトの設定で良い上、
-「4. logファイルの分析とデータの取得」も処理自体が不要である。
-よって「2. <a class="reference internal" href="#constant-transportpropertiesnu"><em>constant/transportProperties内のnuの編集</em></a>」と
-「5. <a class="reference internal" href="#function-objects"><em>function Objectsで取得したデータの取得</em></a>」の説明を以下で行う。</p>
+<p>今回「1. 解析結果の消去」「3. Allrunの実行」についてはデフォルトの設定で良い上、「4. logファイルの分析とデータの取得」も処理自体が不要である。
+よって「2. <a class="reference internal" href="#constant-transportpropertiesnu"><em>constant/transportProperties内のnuの編集</em></a>」と「5. <a class="reference internal" href="#function-objects"><em>function Objectsで取得したデータの取得</em></a>」の説明を以下で行う。</p>
 <div class="section" id="constant-transportpropertiesnu">
 <span id="id2"></span><h4><em>constant/transportProperties内のnuの編集</em><a class="headerlink" href="#constant-transportpropertiesnu" title="Permalink to this headline">¶</a></h4>
-<p>再び、cavity componentを右クリックし表示されるポップアップメニューから、
-Editを選択し、ダイアログを表示させる。</p>
+<p>再び、cavity_componentを右クリックし表示されるポップアップメニューからEditを選択し、ダイアログを表示させる。</p>
 <p>foamEditKeywords行のvalue列の[object Object]欄をダブルクリックする。
 表示されるダイアログに下記を入力し、&#8221;+&#8221; ボタンをクリックする。</p>
 <table border="1" class="docutils">
@@ -188,8 +176,8 @@ Editを選択し、ダイアログを表示させる。</p>
 <col width="49%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-odd"><th class="head"><strong>Key</strong></th>
-<th class="head"><strong>Value</strong></th>
+<tr class="row-odd"><th class="head">Key</th>
+<th class="head">Value</th>
 </tr>
 </thead>
 <tbody valign="top">
@@ -198,18 +186,14 @@ Editを選択し、ダイアログを表示させる。</p>
 </tr>
 </tbody>
 </table>
-<p>foamEditKeywordsを変更されたcavity componentは、
-自身にiotype:&#8217;in&#8217;のFloat型の変数nuを生成する(cavity.nuを生成する)。</p>
-<p>cavity componentのEditから表示されるダイアログに、
-nuが生成されていることが確認できれば、初期値0.1を入力する。</p>
-<p>またcavity componentは実行(runメソッド)時に、
-constant/transportPropertiesファイルの項目nuを&#8221;nu [0 2 -1 0 0 0 0] x&#8221;に変更して、
-書き込む。(※ xはcavity.nuの値)</p>
+<p>上記をブラウザからコピーする場合、文字&#8221;のエンコードに注意のこと。</p>
+<p>foamEditKeywordsを変更されたcavity_componentは、自身にiotype:&#8217;in&#8217;のFloat型の変数nuを生成する(cavity.nuを生成する)。</p>
+<p>cavity_componentのEditから表示されるダイアログに、nuが生成されていることが確認できれば、初期値0.1を入力する。</p>
+<p>またcavity_componentは実行(runメソッド)時に、constant/transportPropertiesファイルの項目nuを&#8221;nu [0 2 -1 0 0 0 0] x&#8221;に変更して、書き込む。(※ xはcavity.nuの値)</p>
 </div>
 <div class="section" id="function-objects">
 <span id="id3"></span><h4><em>function Objectsで取得したデータの取得</em><a class="headerlink" href="#function-objects" title="Permalink to this headline">¶</a></h4>
-<p>引続き、cavity componentのEditから表示されるダイアログにて
-foamGetTimelineKeywords行のvalue列の[object Object]欄をダブルクリックする。
+<p>引続き、cavityコンポーネントのEditから表示されるダイアログにて、foamGetTimelineKeywords行のvalue列の[object Object]欄をダブルクリックする。
 表示されるダイアログに下記を入力し、&#8221;+&#8221; ボタンをクリックする。</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -217,8 +201,8 @@ foamGetTimelineKeywords行のvalue列の[object Object]欄をダブルクリッ�
 <col width="76%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-odd"><th class="head"><strong>Key</strong></th>
-<th class="head"><strong>Value</strong></th>
+<tr class="row-odd"><th class="head">Key</th>
+<th class="head">Value</th>
 </tr>
 </thead>
 <tbody valign="top">
@@ -227,17 +211,10 @@ foamGetTimelineKeywords行のvalue列の[object Object]欄をダブルクリッ�
 </tr>
 </tbody>
 </table>
-<p>foamEditKeywordsを変更されたcavity componentは、
-自身にiotype:&#8217;out&#8217;のopenfoam_wrapper.openfoam_wrapper.TimeLineValue型の
-変数press1を生成する(cavity.press1を生成する)。</p>
-<p>実行(runメソッド)時に、
-press1はpostProcessing/probes/0/pファイルの第1カラムを読み込む(0カラムはtime)。
+<p>foamEditKeywordsを変更されたcavity_componentは、自身にiotype:&#8217;out&#8217;のopenfoam_wrapper.openfoam_wrapper.TimeLineValue型の変数press1を生成する(cavity.press1を生成する)。</p>
+<p>実行(runメソッド)時に、press1はpostProcessing/probes/0/pファイルの第1カラムを読み込む(0カラムはtime)。
 press1はクラス変数にlatetTimeValueやaverageValue,minValue,maxValueなどを持つ。</p>
-<p>case_dirの設定、「 <a class="reference internal" href="#constant-transportpropertiesnu"><em>constant/transportProperties内のnuの編集</em></a>」、
-「 <a class="reference internal" href="#function-objects"><em>function Objectsで取得したデータの取得</em></a>」の設定及び、
-cavity.nuへの初期値を入力が完了後、
-cavity componentを右クリックし表示されるポップアップメニューから
-Runを選択し、動作を確認する。</p>
+<p>case_dirの設定、「 <a class="reference internal" href="#constant-transportpropertiesnu"><em>constant/transportProperties内のnuの編集</em></a>」、「 <a class="reference internal" href="#function-objects"><em>function Objectsで取得したデータの取得</em></a>」の設定及び、cavity.nuへの初期値を入力が完了後、cavity_componentを右クリックし表示されるポップアップメニューからRunを選択し、動作を確認する。</p>
 </div>
 </div>
 <div class="section" id="broydensolver">
@@ -356,7 +333,7 @@ cavity_broyden_sample.pyと言う名前のファイルを作成し、下記の�
 <li><a class="reference internal" href="#overview">Overview</a></li>
 <li><a class="reference internal" href="#cavity-case">cavity caseの準備</a></li>
 <li><a class="reference internal" href="#gui">GUIからの実行方法</a><ul>
-<li><a class="reference internal" href="#cavity-component">cavity componentの設定</a><ul>
+<li><a class="reference internal" href="#cavity-component">cavity_componentの設定</a><ul>
 <li><a class="reference internal" href="#constant-transportpropertiesnu"><em>constant/transportProperties内のnuの編集</em></a></li>
 <li><a class="reference internal" href="#function-objects"><em>function Objectsで取得したデータの取得</em></a></li>
 </ul>

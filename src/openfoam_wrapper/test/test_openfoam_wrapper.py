@@ -6,6 +6,8 @@ import shutil
 from openmdao.main.datatypes.api import Float, Dict
 
 from PyFoam.RunDictionary.SolutionDirectory import SolutionDirectory
+from PyFoam.FoamInformation import foamTutorials
+from PyFoam.FoamInformation import foamVersionNumber
 
 try:
     from openfoam_wrapper.openfoam_wrapper import OpenFOAM_wrapper
@@ -36,7 +38,10 @@ class Cavity(OpenFOAM_wrapper):
 class OpenFOAM_wrapperTestCase(unittest.TestCase):
        
     def setUp(self):
-        cavityTut = os.path.join(os.getenv("FOAM_TUTORIALS"),
+        if not foamVersionNumber() == (2,3):
+            unittest.SkipTest("need ver.2.3  for this unittest.")
+        
+        cavityTut = os.path.join(foamTutorials(),
                                 "incompressible/icoFoam/cavity")
         if not os.path.exists(cavityTut):
             unittest.SkipTest("need $FOAM_TUTORIALS/incompressible/cavity \

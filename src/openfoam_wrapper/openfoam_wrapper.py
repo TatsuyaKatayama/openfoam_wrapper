@@ -11,21 +11,19 @@ from PyFoam.RunDictionary.ParsedParameterFile import ParsedParameterFile
 from PyFoam.LogAnalysis.SimpleLineAnalyzer import GeneralSimpleLineAnalyzer
 from PyFoam.LogAnalysis.FoamLogAnalyzer import FoamLogAnalyzer
 from PyFoam.LogAnalysis.LogAnalyzerApplication import LogAnalyzerApplication
-from PyFoam.Execution.BasicRunner import BasicRunner
 from PyFoam.RunDictionary.TimelineDirectory import TimelineDirectory
 
 import os
-import re
-import ast
-import numpy
 import shlex
 import string
+import numpy
 
 
 class FoamBaseComponent(Component):
     """This class is base Component to execute OpenFOAM pre,main and post commands"""
     case_dir = Str("", iotype="in", desc='OpenFOAM Case Dir. Absolute path or relative path in $FOAM_RUN.')
-    force_fd = Bool(True, iotype='in', framework_var=True, deriv_ignore=True, desc="If True, always finite difference this component.")
+    force_fd = Bool(True, iotype='in', framework_var=True, deriv_ignore=True,
+                    desc="If True, always finite difference this component.")
 
     def __init__(self):
         """Component.__init__() and check the path to icoFoam."""
@@ -37,26 +35,29 @@ class FoamBaseComponent(Component):
             self.raise_exception("OpenFOAM command is not found. Check $PATH.", RuntimeError)
 
         if not self.case_dir == '':
-            caseDir = self.getPath(self.case_dir,False)
+            caseDir = self.getPath(self.case_dir, False)
             
-            if not caseDir==None:
+            if not caseDir == None:
                 #type(caseDir) is str or unicode
                 self.foam_case = SolutionDirectory(str(caseDir))
 
     def check_config(self):
-        if not self.foam_case and self.case_dir == "" :
+        if not self.foam_case and self.case_dir == "":
             self.raise_exception("Not set self.case_dir.", RuntimeError)
     
         if not os.path.exists(self.foam_case.controlDict()):
-            self.raise_exception("%s is not found. Check self.case_dir." %(self.foam_case.controlDict()), RuntimeError)
+            self.raise_exception("%s is not found. Check self.case_dir." % (self.foam_case.controlDict()),
+                                 RuntimeError)
 
-    def _which(self,cmd):
-        """which command whith python.""" 
-        def is_exe(fpath):
-            return os.path.isfile(fpath) and os.access(fpath,os.X_OK)
+    def _which(self, cmd):
+        """which command with python."""
+        def is_exe(val):
+            return os.path.isfile(val) and os.access(val, os.X_OK)
+
         fpath, fname = os.path.split(cmd)
         if fpath:
-            if is_exe(cmd): return cmd
+            if is_exe(cmd):
+                return cmd
         else:        
             for path in os.environ["PATH"].split(os.pathsep):
                 path = path.strip('"')
@@ -65,7 +66,7 @@ class FoamBaseComponent(Component):
                     return exe_file
         return None
         
-    def getPath(self,fdpath,riseError=True):
+    def getPath(self, fdpath, riseError=True):
         """check and get the absolute path or relative path in $FOAM_RUN.""" 
         if os.path.exists(fdpath):
             return fdpath
@@ -91,7 +92,7 @@ class FoamBaseComponent(Component):
         if name == 'case_dir':
             caseDir = self.getPath(new,False)
             
-            if not caseDir==None:
+            if not caseDir == None:
                 #type(caseDir) is str or unicode
                 self.foam_case = SolutionDirectory(str(caseDir))
             else:

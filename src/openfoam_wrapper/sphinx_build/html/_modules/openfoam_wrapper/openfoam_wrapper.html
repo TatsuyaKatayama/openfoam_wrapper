@@ -61,21 +61,19 @@
 <span class="kn">from</span> <span class="nn">PyFoam.LogAnalysis.SimpleLineAnalyzer</span> <span class="kn">import</span> <span class="n">GeneralSimpleLineAnalyzer</span>
 <span class="kn">from</span> <span class="nn">PyFoam.LogAnalysis.FoamLogAnalyzer</span> <span class="kn">import</span> <span class="n">FoamLogAnalyzer</span>
 <span class="kn">from</span> <span class="nn">PyFoam.LogAnalysis.LogAnalyzerApplication</span> <span class="kn">import</span> <span class="n">LogAnalyzerApplication</span>
-<span class="kn">from</span> <span class="nn">PyFoam.Execution.BasicRunner</span> <span class="kn">import</span> <span class="n">BasicRunner</span>
 <span class="kn">from</span> <span class="nn">PyFoam.RunDictionary.TimelineDirectory</span> <span class="kn">import</span> <span class="n">TimelineDirectory</span>
 
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">import</span> <span class="nn">ast</span>
-<span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">import</span> <span class="nn">shlex</span>
 <span class="kn">import</span> <span class="nn">string</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
 
 
 <div class="viewcode-block" id="FoamBaseComponent"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamBaseComponent">[docs]</a><span class="k">class</span> <span class="nc">FoamBaseComponent</span><span class="p">(</span><span class="n">Component</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;This class is base Component to execute OpenFOAM pre,main and post commands&quot;&quot;&quot;</span>
     <span class="n">case_dir</span> <span class="o">=</span> <span class="n">Str</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;in&quot;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;OpenFOAM Case Dir. Absolute path or relative path in $FOAM_RUN.&#39;</span><span class="p">)</span>
-    <span class="n">force_fd</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="n">framework_var</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">deriv_ignore</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&quot;If True, always finite difference this component.&quot;</span><span class="p">)</span>
+    <span class="n">force_fd</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="n">framework_var</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">deriv_ignore</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                    <span class="n">desc</span><span class="o">=</span><span class="s">&quot;If True, always finite difference this component.&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Component.__init__() and check the path to icoFoam.&quot;&quot;&quot;</span>
@@ -87,26 +85,29 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;OpenFOAM command is not found. Check $PATH.&quot;</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_dir</span> <span class="o">==</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
-            <span class="n">caseDir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getPath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">case_dir</span><span class="p">,</span><span class="bp">False</span><span class="p">)</span>
+            <span class="n">caseDir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getPath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">case_dir</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
             
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">caseDir</span><span class="o">==</span><span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">caseDir</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="c">#type(caseDir) is str or unicode</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span> <span class="o">=</span> <span class="n">SolutionDirectory</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">caseDir</span><span class="p">))</span>
 
 <div class="viewcode-block" id="FoamBaseComponent.check_config"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamBaseComponent.check_config">[docs]</a>    <span class="k">def</span> <span class="nf">check_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_dir</span> <span class="o">==</span> <span class="s">&quot;&quot;</span> <span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_dir</span> <span class="o">==</span> <span class="s">&quot;&quot;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;Not set self.case_dir.&quot;</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">)</span>
     
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">controlDict</span><span class="p">()):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> is not found. Check self.case_dir.&quot;</span> <span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">controlDict</span><span class="p">()),</span> <span class="ne">RuntimeError</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> is not found. Check self.case_dir.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span><span class="o">.</span><span class="n">controlDict</span><span class="p">()),</span>
+                                 <span class="ne">RuntimeError</span><span class="p">)</span>
 </div>
-    <span class="k">def</span> <span class="nf">_which</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">cmd</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;which command whith python.&quot;&quot;&quot;</span> 
-        <span class="k">def</span> <span class="nf">is_exe</span><span class="p">(</span><span class="n">fpath</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span><span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_which</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;which command with python.&quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">is_exe</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">)</span>
+
         <span class="n">fpath</span><span class="p">,</span> <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">fpath</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">is_exe</span><span class="p">(</span><span class="n">cmd</span><span class="p">):</span> <span class="k">return</span> <span class="n">cmd</span>
+            <span class="k">if</span> <span class="n">is_exe</span><span class="p">(</span><span class="n">cmd</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">cmd</span>
         <span class="k">else</span><span class="p">:</span>        
             <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&quot;PATH&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">):</span>
                 <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">)</span>
@@ -115,7 +116,7 @@
                     <span class="k">return</span> <span class="n">exe_file</span>
         <span class="k">return</span> <span class="bp">None</span>
         
-<div class="viewcode-block" id="FoamBaseComponent.getPath"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamBaseComponent.getPath">[docs]</a>    <span class="k">def</span> <span class="nf">getPath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fdpath</span><span class="p">,</span><span class="n">riseError</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<div class="viewcode-block" id="FoamBaseComponent.getPath"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamBaseComponent.getPath">[docs]</a>    <span class="k">def</span> <span class="nf">getPath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fdpath</span><span class="p">,</span> <span class="n">riseError</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;check and get the absolute path or relative path in $FOAM_RUN.&quot;&quot;&quot;</span> 
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fdpath</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">fdpath</span>
@@ -141,7 +142,7 @@
         <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s">&#39;case_dir&#39;</span><span class="p">:</span>
             <span class="n">caseDir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getPath</span><span class="p">(</span><span class="n">new</span><span class="p">,</span><span class="bp">False</span><span class="p">)</span>
             
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">caseDir</span><span class="o">==</span><span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">caseDir</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="c">#type(caseDir) is str or unicode</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">foam_case</span> <span class="o">=</span> <span class="n">SolutionDirectory</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">caseDir</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>

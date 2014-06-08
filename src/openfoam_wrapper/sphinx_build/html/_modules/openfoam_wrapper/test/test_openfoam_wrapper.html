@@ -56,6 +56,8 @@
 <span class="kn">from</span> <span class="nn">openmdao.main.datatypes.api</span> <span class="kn">import</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Dict</span>
 
 <span class="kn">from</span> <span class="nn">PyFoam.RunDictionary.SolutionDirectory</span> <span class="kn">import</span> <span class="n">SolutionDirectory</span>
+<span class="kn">from</span> <span class="nn">PyFoam.FoamInformation</span> <span class="kn">import</span> <span class="n">foamTutorials</span>
+<span class="kn">from</span> <span class="nn">PyFoam.FoamInformation</span> <span class="kn">import</span> <span class="n">foamVersionNumber</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">openfoam_wrapper.openfoam_wrapper</span> <span class="kn">import</span> <span class="n">OpenFOAM_wrapper</span>
@@ -86,7 +88,10 @@
 <div class="viewcode-block" id="OpenFOAM_wrapperTestCase"><a class="viewcode-back" href="../../../srcdocs.html#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase">[docs]</a><span class="k">class</span> <span class="nc">OpenFOAM_wrapperTestCase</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
        
 <div class="viewcode-block" id="OpenFOAM_wrapperTestCase.setUp"><a class="viewcode-back" href="../../../srcdocs.html#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">cavityTut</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s">&quot;FOAM_TUTORIALS&quot;</span><span class="p">),</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">foamVersionNumber</span><span class="p">()</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">unittest</span><span class="o">.</span><span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;need ver.2.3  for this unittest.&quot;</span><span class="p">)</span>
+        
+        <span class="n">cavityTut</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">foamTutorials</span><span class="p">(),</span>
                                 <span class="s">&quot;incompressible/icoFoam/cavity&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cavityTut</span><span class="p">):</span>
             <span class="n">unittest</span><span class="o">.</span><span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;need $FOAM_TUTORIALS/incompressible/cavity </span><span class="se">\</span>
