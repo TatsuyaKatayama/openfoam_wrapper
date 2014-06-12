@@ -39,12 +39,12 @@ class OpenFOAM_wrapperTestCase(unittest.TestCase):
        
     def setUp(self):
         if not foamVersionNumber() == (2,3):
-            unittest.SkipTest("need ver.2.3  for this unittest.")
+            raise unittest.SkipTest("need ver.2.3  for this unittest.")
         
         cavityTut = os.path.join(foamTutorials(),
                                 "incompressible/icoFoam/cavity")
         if not os.path.exists(cavityTut):
-            unittest.SkipTest("need $FOAM_TUTORIALS/incompressible/cavity \
+            raise unittest.SkipTest("need $FOAM_TUTORIALS/incompressible/cavity \
                                for unittest.")
 
         try:
@@ -52,7 +52,7 @@ class OpenFOAM_wrapperTestCase(unittest.TestCase):
             shutil.copytree(cavityTut, os.path.join(self.tmpDir,"cavity"))
             cavityCase = SolutionDirectory(os.path.join(self.tmpDir,"cavity"))
         except:
-            unittest.SkipTest("can not copy cavity case to temp_dir.")   
+            raise unittest.SkipTest("can not copy cavity case to temp_dir.")   
                  
         #create Allrun 
         fp = open(os.path.join(cavityCase.name,"Allrun"),'w')
@@ -96,7 +96,7 @@ functions
         try:
             self.cavity = Cavity()
         except RuntimeError:
-            unittest.SkipTest("not found icoFoam. check the $PATH.")
+            raise unittest.SkipTest("not found icoFoam. check the $PATH.")
 
         #check variable x0,x1,x2,x3 in self.cavity instance 
         self.assertTrue(hasattr(self.cavity, "x0"))

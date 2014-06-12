@@ -89,12 +89,12 @@
        
 <div class="viewcode-block" id="OpenFOAM_wrapperTestCase.setUp"><a class="viewcode-back" href="../../../srcdocs.html#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">foamVersionNumber</span><span class="p">()</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">):</span>
-            <span class="n">unittest</span><span class="o">.</span><span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;need ver.2.3  for this unittest.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">unittest</span><span class="o">.</span><span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;need ver.2.3  for this unittest.&quot;</span><span class="p">)</span>
         
         <span class="n">cavityTut</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">foamTutorials</span><span class="p">(),</span>
                                 <span class="s">&quot;incompressible/icoFoam/cavity&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cavityTut</span><span class="p">):</span>
-            <span class="n">unittest</span><span class="o">.</span><span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;need $FOAM_TUTORIALS/incompressible/cavity </span><span class="se">\</span>
+            <span class="k">raise</span> <span class="n">unittest</span><span class="o">.</span><span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;need $FOAM_TUTORIALS/incompressible/cavity </span><span class="se">\</span>
 <span class="s">                               for unittest.&quot;</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
@@ -102,7 +102,7 @@
             <span class="n">shutil</span><span class="o">.</span><span class="n">copytree</span><span class="p">(</span><span class="n">cavityTut</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span><span class="p">,</span><span class="s">&quot;cavity&quot;</span><span class="p">))</span>
             <span class="n">cavityCase</span> <span class="o">=</span> <span class="n">SolutionDirectory</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpDir</span><span class="p">,</span><span class="s">&quot;cavity&quot;</span><span class="p">))</span>
         <span class="k">except</span><span class="p">:</span>
-            <span class="n">unittest</span><span class="o">.</span><span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;can not copy cavity case to temp_dir.&quot;</span><span class="p">)</span>   
+            <span class="k">raise</span> <span class="n">unittest</span><span class="o">.</span><span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;can not copy cavity case to temp_dir.&quot;</span><span class="p">)</span>   
                  
         <span class="c">#create Allrun </span>
         <span class="n">fp</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cavityCase</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="s">&quot;Allrun&quot;</span><span class="p">),</span><span class="s">&#39;w&#39;</span><span class="p">)</span>
@@ -146,7 +146,7 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cavity</span> <span class="o">=</span> <span class="n">Cavity</span><span class="p">()</span>
         <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
-            <span class="n">unittest</span><span class="o">.</span><span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;not found icoFoam. check the $PATH.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">unittest</span><span class="o">.</span><span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;not found icoFoam. check the $PATH.&quot;</span><span class="p">)</span>
 
         <span class="c">#check variable x0,x1,x2,x3 in self.cavity instance </span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cavity</span><span class="p">,</span> <span class="s">&quot;x0&quot;</span><span class="p">))</span>
@@ -214,7 +214,7 @@
     </div>
     <div class="footer">
         &copy; Copyright .
-      Last updated on Jun 08, 2014.
+      Last updated on Jun 13, 2014.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
