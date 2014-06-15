@@ -5,6 +5,7 @@ from openmdao.main.api import Component, VariableTree
 from openmdao.main.datatypes.api import Float, Int, Str, Dict, Array, VarTree, Bool
 from openmdao.main.datatypes.list import List
 from openmdao.lib.components.external_code import ExternalCode
+from openmdao.lib.components.api import MetaModel
 
 from PyFoam.RunDictionary.SolutionDirectory import SolutionDirectory
 from PyFoam.RunDictionary.ParsedParameterFile import ParsedParameterFile
@@ -17,6 +18,58 @@ import os
 import shlex
 import string
 import numpy
+
+class FoamMetaModel(MetaModel):
+    def check_config(self):
+        '''Called as part of pre_execute.'''
+
+        # 1. model must be set
+        if self.model is None:
+            self.raise_exception("MetaModel object must have a model!",
+                                 RuntimeError)
+
+        # 2. can't have both includes and excludes
+        if self.excludes and self.includes:
+            self.raise_exception("includes and excludes are mutually exclusive",
+                                 RuntimeError)
+
+        # 3. the includes and excludes must match actual inputs and outputs of the model
+        input_names = self.surrogate_input_names()
+        output_names = self.surrogate_output_names()
+        #input_and_output_names = input_names + output_names
+        input_and_output_names = [ (n + ".")[:(n + ".").find(".")] for n in (input_names + output_names)]
+        for include in self.includes:
+            if include not in input_and_output_names:
+                self.raise_exception('The include "%s" is not one of the '
+                                     'model inputs or outputs ' % include, ValueError)
+        for exclude in self.excludes:
+            if exclude not in input_and_output_names:
+                self.raise_exception('The exclude "%s" is not one of the '
+                                     'model inputs or outputs ' % exclude, ValueError)
+
+        # 4. Either there are no surrogates set and no default surrogate
+        #    ( just do passthrough )
+        #        or
+        #    all outputs must have surrogates assigned either explicitly
+        #    or through the default surrogate
+        if self.default_surrogate is None:
+            no_sur = []
+            for name in self.surrogate_output_names():
+                if not self.surrogates[name]:
+                    no_sur.append(name)
+            if len(no_sur) > 0 and len(no_sur) != len(self._surrogate_output_names):
+                self.raise_exception("No default surrogate model is defined and"
+                                     " the following outputs do not have a"
+                                     " surrogate model: %s. Either specify"
+                                     " default_surrogate, or specify a"
+                                     " surrogate model for all outputs." %
+                                     no_sur, RuntimeError)
+
+        # 5. All the explicitly set surrogates[] should match actual outputs of the model
+        for surrogate_name in self.surrogates.keys():
+            if surrogate_name not in output_names:
+                self.raise_exception('The surrogate "%s" does not match one of the '
+                                     'model outputs ' % surrogate_name, ValueError)
 
 
 class FoamBaseComponent(Component):
@@ -318,22 +371,22 @@ class FoamRunCommands(FoamBaseComponent,ExternalCode):
 
 class TimeLineValue(VariableTree):
     """Container of variables"""
-    allTimesValues = Array(numpy.array([[0.0,0.0]]))
-    averageValue = Float(0.0)
-    latestTimeValue = Float(0.0)
-    maxValue = Float(0.0)
-    minValue = Float(0.0)
-    sumValue = Float(0.0)
+    _allTimesValues = Array(numpy.array([[0.0,0.0]]))
+    averageValue = Float(0.0, iotype="out")
+    latestTimeValue = Float(0.0, iotype="out")
+    maxValue = Float(0.0, iotype="out")
+    minValue = Float(0.0, iotype="out")
+    sumValue = Float(0.0, iotype="out")
     
     def correct(self):
         """
         update averageValue,latestTimeValue,maxValue,minValue,sumValue from allTimesValues.
         """
-        self.averageValue = self.allTimesValues[:,1].mean()
-        self.latestTimeValue = self.allTimesValues[-1,1]
-        self.maxValue = self.allTimesValues[:,1].max()
-        self.minValue = self.allTimesValues[:,1].min()
-        self.sumValue = self.allTimesValues[:,1].sum()
+        self.averageValue = self._allTimesValues[:,1].mean()
+        self.latestTimeValue = self._allTimesValues[-1,1]
+        self.maxValue = self._allTimesValues[:,1].max()
+        self.minValue = self._allTimesValues[:,1].min()
+        self.sumValue = self._allTimesValues[:,1].sum()
     
 
 class FoamGetTimeline(FoamBaseComponent):
@@ -404,7 +457,7 @@ class FoamGetTimeline(FoamBaseComponent):
                 timeLines[probefile]=numpy.array(ssdata.data.tolist())
              
             res = self.get(key)
-            res.allTimesValues = numpy.c_[timeLines[probefile][:,0],timeLines[probefile][:,column]]
+            res._allTimesValues = numpy.c_[timeLines[probefile][:,0],timeLines[probefile][:,column]]
             res.correct()
 
 
@@ -473,7 +526,7 @@ class FoamAnalyzeLogs(FoamBaseComponent):
         # get result from  lineAnalyzer     
         for key,val in lineAnalyzers.iteritems():
             res = self.get(key)
-            res.allTimesValues = numpy.array(list(val.getTimeline(key + '_0'))).transpose()
+            res._allTimesValues = numpy.array(list(val.getTimeline(key + '_0'))).transpose()
             res.correct()
 
 

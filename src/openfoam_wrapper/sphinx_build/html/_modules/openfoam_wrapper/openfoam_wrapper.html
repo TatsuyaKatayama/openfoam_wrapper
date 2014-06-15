@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>openfoam_wrapper.openfoam_wrapper &mdash; openfoam_wrapper 0.03 documentation</title>
+    <title>openfoam_wrapper.openfoam_wrapper &mdash; openfoam_wrapper 0.04 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.03',
+        VERSION:     '0.04',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="openfoam_wrapper 0.03 documentation" href="../../index.html" />
+    <link rel="top" title="openfoam_wrapper 0.04 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" /> 
   </head>
   <body>
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">openfoam_wrapper 0.03 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">openfoam_wrapper 0.04 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
@@ -55,6 +55,7 @@
 <span class="kn">from</span> <span class="nn">openmdao.main.datatypes.api</span> <span class="kn">import</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">VarTree</span><span class="p">,</span> <span class="n">Bool</span>
 <span class="kn">from</span> <span class="nn">openmdao.main.datatypes.list</span> <span class="kn">import</span> <span class="n">List</span>
 <span class="kn">from</span> <span class="nn">openmdao.lib.components.external_code</span> <span class="kn">import</span> <span class="n">ExternalCode</span>
+<span class="kn">from</span> <span class="nn">openmdao.lib.components.api</span> <span class="kn">import</span> <span class="n">MetaModel</span>
 
 <span class="kn">from</span> <span class="nn">PyFoam.RunDictionary.SolutionDirectory</span> <span class="kn">import</span> <span class="n">SolutionDirectory</span>
 <span class="kn">from</span> <span class="nn">PyFoam.RunDictionary.ParsedParameterFile</span> <span class="kn">import</span> <span class="n">ParsedParameterFile</span>
@@ -68,7 +69,59 @@
 <span class="kn">import</span> <span class="nn">string</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
 
+<div class="viewcode-block" id="FoamMetaModel"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamMetaModel">[docs]</a><span class="k">class</span> <span class="nc">FoamMetaModel</span><span class="p">(</span><span class="n">MetaModel</span><span class="p">):</span>
+<div class="viewcode-block" id="FoamMetaModel.check_config"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamMetaModel.check_config">[docs]</a>    <span class="k">def</span> <span class="nf">check_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Called as part of pre_execute.&#39;&#39;&#39;</span>
 
+        <span class="c"># 1. model must be set</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;MetaModel object must have a model!&quot;</span><span class="p">,</span>
+                                 <span class="ne">RuntimeError</span><span class="p">)</span>
+
+        <span class="c"># 2. can&#39;t have both includes and excludes</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">excludes</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">includes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;includes and excludes are mutually exclusive&quot;</span><span class="p">,</span>
+                                 <span class="ne">RuntimeError</span><span class="p">)</span>
+
+        <span class="c"># 3. the includes and excludes must match actual inputs and outputs of the model</span>
+        <span class="n">input_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">surrogate_input_names</span><span class="p">()</span>
+        <span class="n">output_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">surrogate_output_names</span><span class="p">()</span>
+        <span class="c">#input_and_output_names = input_names + output_names</span>
+        <span class="n">input_and_output_names</span> <span class="o">=</span> <span class="p">[</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span><span class="p">)[:(</span><span class="n">n</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&quot;.&quot;</span><span class="p">)]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="p">(</span><span class="n">input_names</span> <span class="o">+</span> <span class="n">output_names</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">include</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">includes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">include</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">input_and_output_names</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&#39;The include &quot;</span><span class="si">%s</span><span class="s">&quot; is not one of the &#39;</span>
+                                     <span class="s">&#39;model inputs or outputs &#39;</span> <span class="o">%</span> <span class="n">include</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">exclude</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">excludes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">exclude</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">input_and_output_names</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&#39;The exclude &quot;</span><span class="si">%s</span><span class="s">&quot; is not one of the &#39;</span>
+                                     <span class="s">&#39;model inputs or outputs &#39;</span> <span class="o">%</span> <span class="n">exclude</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span>
+
+        <span class="c"># 4. Either there are no surrogates set and no default surrogate</span>
+        <span class="c">#    ( just do passthrough )</span>
+        <span class="c">#        or</span>
+        <span class="c">#    all outputs must have surrogates assigned either explicitly</span>
+        <span class="c">#    or through the default surrogate</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_surrogate</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">no_sur</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">surrogate_output_names</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">surrogates</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+                    <span class="n">no_sur</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">no_sur</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">no_sur</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_surrogate_output_names</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&quot;No default surrogate model is defined and&quot;</span>
+                                     <span class="s">&quot; the following outputs do not have a&quot;</span>
+                                     <span class="s">&quot; surrogate model: </span><span class="si">%s</span><span class="s">. Either specify&quot;</span>
+                                     <span class="s">&quot; default_surrogate, or specify a&quot;</span>
+                                     <span class="s">&quot; surrogate model for all outputs.&quot;</span> <span class="o">%</span>
+                                     <span class="n">no_sur</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">)</span>
+
+        <span class="c"># 5. All the explicitly set surrogates[] should match actual outputs of the model</span>
+        <span class="k">for</span> <span class="n">surrogate_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">surrogates</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">surrogate_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">output_names</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">raise_exception</span><span class="p">(</span><span class="s">&#39;The surrogate &quot;</span><span class="si">%s</span><span class="s">&quot; does not match one of the &#39;</span>
+                                     <span class="s">&#39;model outputs &#39;</span> <span class="o">%</span> <span class="n">surrogate_name</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span>
+
+</div></div>
 <div class="viewcode-block" id="FoamBaseComponent"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamBaseComponent">[docs]</a><span class="k">class</span> <span class="nc">FoamBaseComponent</span><span class="p">(</span><span class="n">Component</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;This class is base Component to execute OpenFOAM pre,main and post commands&quot;&quot;&quot;</span>
     <span class="n">case_dir</span> <span class="o">=</span> <span class="n">Str</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;in&quot;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;OpenFOAM Case Dir. Absolute path or relative path in $FOAM_RUN.&#39;</span><span class="p">)</span>
@@ -368,22 +421,22 @@
 </div>
 <div class="viewcode-block" id="TimeLineValue"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.TimeLineValue">[docs]</a><span class="k">class</span> <span class="nc">TimeLineValue</span><span class="p">(</span><span class="n">VariableTree</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Container of variables&quot;&quot;&quot;</span>
-    <span class="n">allTimesValues</span> <span class="o">=</span> <span class="n">Array</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]]))</span>
-    <span class="n">averageValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
-    <span class="n">latestTimeValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
-    <span class="n">maxValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
-    <span class="n">minValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
-    <span class="n">sumValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">_allTimesValues</span> <span class="o">=</span> <span class="n">Array</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]]))</span>
+    <span class="n">averageValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;out&quot;</span><span class="p">)</span>
+    <span class="n">latestTimeValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;out&quot;</span><span class="p">)</span>
+    <span class="n">maxValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;out&quot;</span><span class="p">)</span>
+    <span class="n">minValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;out&quot;</span><span class="p">)</span>
+    <span class="n">sumValue</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">iotype</span><span class="o">=</span><span class="s">&quot;out&quot;</span><span class="p">)</span>
     
 <div class="viewcode-block" id="TimeLineValue.correct"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.TimeLineValue.correct">[docs]</a>    <span class="k">def</span> <span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        update averageValue,latestTimeValue,maxValue,minValue,sumValue from allTimesValues.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">averageValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allTimesValues</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">latestTimeValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allTimesValues</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">maxValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allTimesValues</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">minValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allTimesValues</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sumValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allTimesValues</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">averageValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allTimesValues</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">latestTimeValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allTimesValues</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allTimesValues</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allTimesValues</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sumValue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allTimesValues</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
     
 </div></div>
 <div class="viewcode-block" id="FoamGetTimeline"><a class="viewcode-back" href="../../srcdocs.html#openfoam_wrapper.openfoam_wrapper.FoamGetTimeline">[docs]</a><span class="k">class</span> <span class="nc">FoamGetTimeline</span><span class="p">(</span><span class="n">FoamBaseComponent</span><span class="p">):</span>
@@ -454,7 +507,7 @@
                 <span class="n">timeLines</span><span class="p">[</span><span class="n">probefile</span><span class="p">]</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ssdata</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
              
             <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="n">res</span><span class="o">.</span><span class="n">allTimesValues</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">timeLines</span><span class="p">[</span><span class="n">probefile</span><span class="p">][:,</span><span class="mi">0</span><span class="p">],</span><span class="n">timeLines</span><span class="p">[</span><span class="n">probefile</span><span class="p">][:,</span><span class="n">column</span><span class="p">]]</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">_allTimesValues</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">timeLines</span><span class="p">[</span><span class="n">probefile</span><span class="p">][:,</span><span class="mi">0</span><span class="p">],</span><span class="n">timeLines</span><span class="p">[</span><span class="n">probefile</span><span class="p">][:,</span><span class="n">column</span><span class="p">]]</span>
             <span class="n">res</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
 
 </div></div>
@@ -523,7 +576,7 @@
         <span class="c"># get result from  lineAnalyzer     </span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="n">lineAnalyzers</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
             <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="n">res</span><span class="o">.</span><span class="n">allTimesValues</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">getTimeline</span><span class="p">(</span><span class="n">key</span> <span class="o">+</span> <span class="s">&#39;_0&#39;</span><span class="p">)))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">_allTimesValues</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">getTimeline</span><span class="p">(</span><span class="n">key</span> <span class="o">+</span> <span class="s">&#39;_0&#39;</span><span class="p">)))</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
             <span class="n">res</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
 
 </div></div>
@@ -590,13 +643,13 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">openfoam_wrapper 0.03 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">openfoam_wrapper 0.04 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright .
-      Last updated on Jun 13, 2014.
+      Last updated on Jun 16, 2014.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>

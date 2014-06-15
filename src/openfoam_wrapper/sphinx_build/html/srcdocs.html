@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Source Documentation &mdash; openfoam_wrapper 0.03 documentation</title>
+    <title>Source Documentation &mdash; openfoam_wrapper 0.04 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.03',
+        VERSION:     '0.04',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="openfoam_wrapper 0.03 documentation" href="index.html" />
+    <link rel="top" title="openfoam_wrapper 0.04 documentation" href="index.html" />
     <link rel="next" title="Package Metadata" href="pkgdocs.html" />
     <link rel="prev" title="Usage Guide" href="usage.html" /> 
   </head>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="usage.html" title="Usage Guide"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">openfoam_wrapper 0.03 documentation</a> &raquo;</li> 
+        <li><a href="index.html">openfoam_wrapper 0.04 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -247,6 +247,18 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
 </dd></dl>
 
 <dl class="class">
+<dt id="openfoam_wrapper.openfoam_wrapper.FoamMetaModel">
+<em class="property">class </em><tt class="descclassname">openfoam_wrapper.openfoam_wrapper.</tt><tt class="descname">FoamMetaModel</tt><a class="reference internal" href="_modules/openfoam_wrapper/openfoam_wrapper.html#FoamMetaModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.openfoam_wrapper.FoamMetaModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">openmdao.lib.components.metamodel.MetaModel</span></tt></p>
+<dl class="method">
+<dt id="openfoam_wrapper.openfoam_wrapper.FoamMetaModel.check_config">
+<tt class="descname">check_config</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/openfoam_wrapper.html#FoamMetaModel.check_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.openfoam_wrapper.FoamMetaModel.check_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called as part of pre_execute.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="openfoam_wrapper.openfoam_wrapper.FoamRunAllrun">
 <em class="property">class </em><tt class="descclassname">openfoam_wrapper.openfoam_wrapper.</tt><tt class="descname">FoamRunAllrun</tt><a class="reference internal" href="_modules/openfoam_wrapper/openfoam_wrapper.html#FoamRunAllrun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.openfoam_wrapper.FoamRunAllrun" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#openfoam_wrapper.openfoam_wrapper.FoamBaseComponent" title="openfoam_wrapper.openfoam_wrapper.FoamBaseComponent"><tt class="xref py py-class docutils literal"><span class="pre">openfoam_wrapper.openfoam_wrapper.FoamBaseComponent</span></tt></a>, <tt class="xref py py-class docutils literal"><span class="pre">openmdao.lib.components.external_code.ExternalCode</span></tt></p>
@@ -384,17 +396,10 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">openmdao.main.vartree.VariableTree</span></tt></p>
 <p>Container of variables</p>
 <dl class="docutils">
-<dt><em>Array</em> <strong>allTimesValues</strong></dt>
-<dd><ul class="first last simple">
-<li>default:  &#8216;[[ 0.  0.]]&#8217;</li>
-<li>comparison_mode:  1</li>
-<li>vartypename:  &#8216;Array&#8217;</li>
-<li>assumed_default:  False</li>
-</ul>
-</dd>
 <dt><em>Float</em> <strong>averageValue</strong></dt>
 <dd><ul class="first last simple">
 <li>default:  &#8216;0.0&#8217;</li>
+<li>iotype:  &#8216;out&#8217;</li>
 <li>vartypename:  &#8216;Float&#8217;</li>
 <li>assumed_default:  False</li>
 </ul>
@@ -402,6 +407,7 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
 <dt><em>Float</em> <strong>latestTimeValue</strong></dt>
 <dd><ul class="first last simple">
 <li>default:  &#8216;0.0&#8217;</li>
+<li>iotype:  &#8216;out&#8217;</li>
 <li>vartypename:  &#8216;Float&#8217;</li>
 <li>assumed_default:  False</li>
 </ul>
@@ -409,6 +415,7 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
 <dt><em>Float</em> <strong>maxValue</strong></dt>
 <dd><ul class="first last simple">
 <li>default:  &#8216;0.0&#8217;</li>
+<li>iotype:  &#8216;out&#8217;</li>
 <li>vartypename:  &#8216;Float&#8217;</li>
 <li>assumed_default:  False</li>
 </ul>
@@ -416,6 +423,7 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
 <dt><em>Float</em> <strong>minValue</strong></dt>
 <dd><ul class="first last simple">
 <li>default:  &#8216;0.0&#8217;</li>
+<li>iotype:  &#8216;out&#8217;</li>
 <li>vartypename:  &#8216;Float&#8217;</li>
 <li>assumed_default:  False</li>
 </ul>
@@ -423,7 +431,16 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
 <dt><em>Float</em> <strong>sumValue</strong></dt>
 <dd><ul class="first last simple">
 <li>default:  &#8216;0.0&#8217;</li>
+<li>iotype:  &#8216;out&#8217;</li>
 <li>vartypename:  &#8216;Float&#8217;</li>
+<li>assumed_default:  False</li>
+</ul>
+</dd>
+<dt><em>Array</em> <strong>_allTimesValues</strong></dt>
+<dd><ul class="first last simple">
+<li>default:  &#8216;[[ 0.  0.]]&#8217;</li>
+<li>comparison_mode:  1</li>
+<li>vartypename:  &#8216;Array&#8217;</li>
 <li>assumed_default:  False</li>
 </ul>
 </dd>
@@ -440,27 +457,32 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
 <div class="section" id="module-openfoam_wrapper.test.test_openfoam_wrapper">
 <span id="test-openfoam-wrapper-py"></span><span id="openfoam-wrapper-test-test-openfoam-wrapper-py"></span><span id="index-1"></span><h2>test_openfoam_wrapper.py<a class="headerlink" href="#module-openfoam_wrapper.test.test_openfoam_wrapper" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="openfoam_wrapper.test.test_openfoam_wrapper.Cavity">
-<em class="property">class </em><tt class="descclassname">openfoam_wrapper.test.test_openfoam_wrapper.</tt><tt class="descname">Cavity</tt><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#Cavity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.Cavity" title="Permalink to this definition">¶</a></dt>
+<dt id="openfoam_wrapper.test.test_openfoam_wrapper.BroydenCavityInstance">
+<em class="property">class </em><tt class="descclassname">openfoam_wrapper.test.test_openfoam_wrapper.</tt><tt class="descname">BroydenCavityInstance</tt><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#BroydenCavityInstance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.BroydenCavityInstance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">openmdao.main.assembly.Assembly</span></tt></p>
+<p>Solves for Cavity.</p>
+<dl class="method">
+<dt id="openfoam_wrapper.test.test_openfoam_wrapper.BroydenCavityInstance.configure">
+<tt class="descname">configure</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#BroydenCavityInstance.configure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.BroydenCavityInstance.configure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="openfoam_wrapper.test.test_openfoam_wrapper.DeformationCavity">
+<em class="property">class </em><tt class="descclassname">openfoam_wrapper.test.test_openfoam_wrapper.</tt><tt class="descname">DeformationCavity</tt><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#DeformationCavity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.DeformationCavity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#openfoam_wrapper.openfoam_wrapper.OpenFOAM_wrapper" title="openfoam_wrapper.openfoam_wrapper.OpenFOAM_wrapper"><tt class="xref py py-class docutils literal"><span class="pre">openfoam_wrapper.openfoam_wrapper.OpenFOAM_wrapper</span></tt></a></p>
-<p><em>Dict</em> <strong>foamAnalyzedKeywords</strong></p>
-<blockquote>
-<div><ul class="simple">
-<li>default:  &#8216;{u&#8217;y0&#8217;: u&#8217;log.icoFoam|DICPCG:  Solving for p, Initial residual = (.+?),&#8217;}&#8217;</li>
-<li>iotype:  &#8216;in&#8217;</li>
-</ul>
-</div></blockquote>
 <p><em>Dict</em> <strong>foamEditKeywords</strong></p>
 <blockquote>
 <div><ul class="simple">
-<li>default:  &#8216;{&#8216;0/U.boundaryField.movingWall.value&#8217;: &#8216;&#8220;uniform (%s 0 %s)&#8221; %(x2,x3)&#8217;, u&#8217;constant/polyMesh/blockMeshDict.convertToMeters&#8217;: u&#8217;&#8221;%s&#8221; %(x1)&#8217;, &#8216;constant/polyMesh/blockMeshDict.vertices[0]&#8217;: &#8216;&#8221;(%s -0.01 0)&#8221; %(x0)&#8217;}&#8217;</li>
+<li>default:  &#8216;{&#8216;constant/polyMesh/blockMeshDict.vertices[1]&#8217;: &#8216;&#8221;(%s 0 0)&#8221; %(x2)&#8217;, &#8216;constant/polyMesh/blockMeshDict.vertices[4]&#8217;: &#8216;&#8221;(%s 0 0.1)&#8221; %(x1)&#8217;, &#8216;constant/polyMesh/blockMeshDict.vertices[5]&#8217;: &#8216;&#8221;(%s 0 0.1)&#8221; %(x2)&#8217;, &#8216;constant/polyMesh/blockMeshDict.vertices[0]&#8217;: &#8216;&#8221;(%s 0 0)&#8221; %(x1)&#8217;}&#8217;</li>
 <li>iotype:  &#8216;in&#8217;</li>
 </ul>
 </div></blockquote>
 <p><em>Dict</em> <strong>foamGetTimelineKeywords</strong></p>
 <blockquote>
 <div><ul class="simple">
-<li>default:  &#8216;{&#8216;y1&#8217;: &#8216;postProcessing/probes/0/p|1&#8217;, u&#8217;y2&#8217;: u&#8217;postProcessing/probes/0/U|2&#8217;}&#8217;</li>
+<li>default:  &#8216;{&#8216;f1&#8217;: &#8216;postProcessing/probes/0/p|1&#8217;, &#8216;f2&#8217;: &#8216;postProcessing/probes/0/p|2&#8217;}&#8217;</li>
 <li>iotype:  &#8216;in&#8217;</li>
 </ul>
 </div></blockquote>
@@ -476,25 +498,36 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
 <li>assumed_default:  False</li>
 </ul>
 </dd>
-<dt><em>Float</em> <strong>x0</strong></dt>
-<dd><p class="first">class variale</p>
+<dt><em>Float</em> <strong>x1</strong></dt>
+<dd><p class="first">The variable x1</p>
 <ul class="last simple">
-<li>default:  &#8216;-0.01&#8217;</li>
+<li>default:  &#8216;0.0&#8217;</li>
 <li>iotype:  &#8216;in&#8217;</li>
 <li>vartypename:  &#8216;Float&#8217;</li>
 <li>assumed_default:  False</li>
 </ul>
 </dd>
-<dt><em>Float</em> <strong>x1</strong></dt>
-<dd><p class="first">class variale</p>
+<dt><em>Float</em> <strong>x2</strong></dt>
+<dd><p class="first">The variable x2</p>
 <ul class="last simple">
-<li>default:  &#8216;0.11&#8217;</li>
+<li>default:  &#8216;1.0&#8217;</li>
 <li>iotype:  &#8216;in&#8217;</li>
 <li>vartypename:  &#8216;Float&#8217;</li>
 <li>assumed_default:  False</li>
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="openfoam_wrapper.test.test_openfoam_wrapper.MultiObjectiveCavity">
+<em class="property">class </em><tt class="descclassname">openfoam_wrapper.test.test_openfoam_wrapper.</tt><tt class="descname">MultiObjectiveCavity</tt><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#MultiObjectiveCavity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.MultiObjectiveCavity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">openmdao.main.assembly.Assembly</span></tt></p>
+<dl class="method">
+<dt id="openfoam_wrapper.test.test_openfoam_wrapper.MultiObjectiveCavity.configure">
+<tt class="descname">configure</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#MultiObjectiveCavity.configure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.MultiObjectiveCavity.configure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="class">
@@ -512,9 +545,16 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.test_standard">
-<tt class="descname">test_standard</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#OpenFOAM_wrapperTestCase.test_standard"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.test_standard" title="Permalink to this definition">¶</a></dt>
-<dd><p>standard check</p>
+<dt id="openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.test_with_broyden">
+<tt class="descname">test_with_broyden</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#OpenFOAM_wrapperTestCase.test_with_broyden"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.test_with_broyden" title="Permalink to this definition">¶</a></dt>
+<dd><p>broyden test</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.test_with_moga">
+<tt class="descname">test_with_moga</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/openfoam_wrapper/test/test_openfoam_wrapper.html#OpenFOAM_wrapperTestCase.test_with_moga"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#openfoam_wrapper.test.test_openfoam_wrapper.OpenFOAM_wrapperTestCase.test_with_moga" title="Permalink to this definition">¶</a></dt>
+<dd><p>moga test with pyopt_driver.
+create meta and optimization with nsga2.</p>
 </dd></dl>
 
 </dd></dl>
@@ -580,12 +620,12 @@ TimelineData is post data with sample command. exampe)&#8221;postprocessing/prob
         <li class="right" >
           <a href="usage.html" title="Usage Guide"
              >previous</a> |</li>
-        <li><a href="index.html">openfoam_wrapper 0.03 documentation</a> &raquo;</li> 
+        <li><a href="index.html">openfoam_wrapper 0.04 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright .
-      Last updated on Jun 13, 2014.
+      Last updated on Jun 16, 2014.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
